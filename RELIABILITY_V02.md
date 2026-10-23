@@ -104,9 +104,13 @@ oracle comparisons.
 as distinct modules and runs paired, deterministic cases. CI pins its original
 main-branch comparison checkout to the PR's immutable base commit
 `e8c5f0461beaf975ab7acaa1e35ced9f2d09a276`. The artifact records SHA-256 checksums
-and resolved Git revisions for both solver sources, and rejects baseline drift
-when `MOCOSO_BASELINE_SHA` supplies the expected commit. CI uploads the
-`v02_comparison.json` measurements. Results are traced-heap peaks and
+and resolved Git revisions for both solver sources. With
+`MOCOSO_BASELINE_SHA`, the benchmark checks both that the baseline checkout
+points to the expected commit and that the loaded baseline Python file's Git
+blob matches that commit's tree entry. This rejects uncommitted edits,
+untracked replacement files and incorrect revisions before any timing or
+memory measurement. The output also records both baseline blob hashes.
+CI uploads the `v02_comparison.json` measurements. Results are traced-heap peaks and
 *instrumented* times; `tracemalloc` overhead is included and this is not a
 controlled hardware performance superiority claim. Complement shortcut rows
 may not allocate a dense table, so their notional payload is *not* observed

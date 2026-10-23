@@ -24,7 +24,7 @@ def import_source(name, path):
     return module
 
 
-def provenance(path):
+def provenance(path, expected_commit=None):
     path = Path(path).resolve()
     try:
         git_sha = subprocess.check_output(
@@ -33,8 +33,38 @@ def provenance(path):
         ).strip()
     except (OSError, subprocess.CalledProcessError):
         git_sha = None
-    return {'git_commit': git_sha,
-            'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+    source = {'git_commit': git_sha,
+              'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+    if expected_commit:
+        if git_sha != expected_commit:
+            raise AssertionError(
+                f'benchmark baseline drift: {git_sha} != {expected_commit}'
+            )
+        try:
+            root = Path(subprocess.check_output(
+                ['git', '-C', str(path.parent), 'rev-parse', '--show-toplevel'],
+                stderr=subprocess.DEVNULL, text=True
+            ).strip()).resolve()
+            relpath = path.relative_to(root).as_posix()
+            committed_blob = subprocess.check_output(
+                ['git', '-C', str(root), 'rev-parse', '--verify',
+                 f'{expected_commit}:{relpath}'],
+                stderr=subprocess.DEVNULL, text=True
+            ).strip()
+            actual_blob = subprocess.check_output(
+                ['git', '-C', str(root), 'hash-object', '--', str(path)],
+                stderr=subprocess.DEVNULL, text=True
+            ).strip()
+        except (OSError, ValueError, subprocess.CalledProcessError) as exc:
+            raise AssertionError('cannot verify baseline file against pinned Git commit') from exc
+        if actual_blob != committed_blob:
+            raise AssertionError(
+                f'benchmark baseline file differs from {expected_commit}:{relpath} '
+                f'(working blob {actual_blob}, committed blob {committed_blob})'
+            )
+        source['git_blob_sha'] = actual_blob
+        source['committed_git_blob_sha'] = committed_blob
+    return source
 
 
 def uninstrumented(solver, a, m):
@@ -75,13 +105,9 @@ def sample(solver, a, m):
 def main():
     if len(sys.argv) != 3:
         raise SystemExit('usage: python benchmarks/compare_v02.py OLD.py NEW.py')
-    baseline = provenance(sys.argv[1])
-    candidate = provenance(sys.argv[2])
     expected_baseline = os.environ.get('MOCOSO_BASELINE_SHA')
-    if expected_baseline and baseline['git_commit'] != expected_baseline:
-        raise AssertionError(
-            f'benchmark baseline drift: {baseline["git_commit"]} != {expected_baseline}'
-        )
+    baseline = provenance(sys.argv[1], expected_commit=expected_baseline)
+    candidate = provenance(sys.argv[2])
     old = import_source('mocoso_pre_v02', Path(sys.argv[1]).resolve())
     new = import_source('mocoso_current_v02', Path(sys.argv[2]).resolve())
     edge = import_source('mocoso_independent_edge', Path('edge_dp.py').resolve())
