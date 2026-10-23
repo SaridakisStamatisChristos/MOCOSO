@@ -29,3 +29,24 @@ Stored JSON must include every raw timing repetition, minimum, maximum, median, 
 ## Gates and limits
 
 Re-run on a second machine/software configuration before any cross-environment performance or 'fastest' claim. Randomized ordering is across algorithms/cases; Python allocator and CPU noise still remain. Timings do not prove an asymptotic theorem. Omitted work not included in comparator cost must be explicitly disclosed. Research prototypes should not auto-route production users, nor circumvent resource-limit contracts. A sample report is not committed until it is actually generated and source hashes are checked.
+
+## Cross-environment reproduction (Windows and Ubuntu)
+
+The GitHub research workflow runs the **same existing 13 cases, algorithms, seed
+20261023, and three timed repetitions** on `ubuntu-latest` and `windows-latest`
+with Python 3.13. The new Windows job executes the exhaustive research tests
+natively before running the full subprocess-isolated benchmark. Its artifact
+`v03-raw-benchmark-windows` contains `v03_windows_raw.json` and
+`v03_hardware_windows.txt`; the Ubuntu artifact remains `v03-raw-benchmark`.
+The source hashes and runtime/OS fields are embedded in each raw JSON.
+`peak_rss_kib_linux` is intentionally null on Windows; compare traced Python
+allocations separately and never interpret null as zero memory usage.
+
+For performance comparisons, pair the **same (n, h, family, algorithm)** on each
+runner and calculate an **intra-runner** baseline/T1 timing ratio. Then compare
+the directions and distributions of those ratios across OS/runner environments.
+Absolute milliseconds from different CPUs/hosts must not be used to assert
+an OS-dependent algorithmic speedup. GitHub-hosted runners can vary in hardware
+and background load; this adds a second environment, not controlled replication
+on identical hardware. The five disclosed post-hoc superconvex workloads remain
+post-hoc, not reclassified as preregistered.
