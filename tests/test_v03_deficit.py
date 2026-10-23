@@ -1,0 +1,186 @@
+"""Independent exhaustive oracle, baseline and resource falsification for v0.3."""
+import importlib.util
+import itertools
+import random
+import sys
+import unittest
+from pathlib import Path
+
+from modconvex import solve as v02_solve, oracle as v02_oracle, cubic_dp, verify
+from edge_dp import solve_edge
+from experiments.v03.baselines import solve_mask, solve_edge_tuple
+
+BASE = Path(__file__).resolve().parents[1]
+spec = importlib.util.spec_from_file_location('v03_deficit', BASE/'experiments/v03/deficit.py')
+module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
+spec.loader.exec_module(module)
+solve_deficit = module.solve_deficit
+
+
+def independent_oracle(a, m):
+    """Enumerate every index subset, not omissions or distinct partitions."""
+    n = len(a)
+    answer = ()
+    for mask in range(1 << n):
+        witness = tuple(j+1 for j in range(n) if (mask >> j) & 1)
+        if sum(witness) % m:
+            continue
+        if any(2*a[j-1] >= a[i-1]+a[k-1]
+               for i, j, k in zip(witness, witness[1:], witness[2:])):
+            continue
+        if len(witness) > len(answer) or (len(witness) == len(answer)
+                and witness < answer):
+            answer = witness
+    return answer
+
+
+class DeficitFalsification(unittest.TestCase):
+    def test_all_small_signed_values_and_high_moduli(self):
+        count = 0
+        for n in range(2, 8):
+            U = n*(n+1)//2
+            for a in itertools.product((-1, 0, 1), repeat=n):
+                for m in range(max(2, U//2+1), U+1):
+                    expected = independent_oracle(a, m)
+                    out = solve_deficit(a, m)
+                    self.assertEqual((out.status, out.indices, out.length),
+                                     ('OPTIMAL', expected, len(expected)), (a, m))
+                    self.assertTrue(verify(a, m, out.indices))
+                    for K in (-1, 0, 1, len(expected), len(expected)+1, n+1):
+                        got = solve_deficit(a, m, K=K)
+                        self.assertEqual(got.status, 'FEASIBLE' if K <= len(expected)
+                                         else 'INFEASIBLE', (a, m, K))
+                        self.assertTrue(verify(a, m, got.indices))
+                        if got.status == 'FEASIBLE':
+                            self.assertGreaterEqual(len(got.indices), K)
+                    if count % 83 == 0:
+                        self.assertEqual(v02_solve(a, m).indices, expected)
+                        self.assertEqual(solve_edge(a, m), expected)
+                        self.assertEqual(v02_oracle(a, m), expected)
+                        if n <= 5:
+                            self.assertEqual(cubic_dp(a, m), expected)
+                    count += 1
+        self.assertEqual(count, 41085)
+
+    def test_exact_comparator_equivalence_small(self):
+        count = 0
+        for n in range(2, 7):
+            U = n*(n+1)//2
+            for a in itertools.product((-1,0,1), repeat=n):
+                for m in range(max(2, U//2+1), U+1):
+                    expected = independent_oracle(a, m)
+                    self.assertEqual(solve_mask(a, m), expected)
+                    self.assertEqual(solve_edge_tuple(a, m), expected)
+                    count += 1
+        self.assertEqual(count, 10467)
+
+    def test_fuzz_large_signed_boundary(self):
+        rng = random.Random(20261023)
+        for _ in range(250):
+            n = rng.randrange(2, 12)
+            a = [rng.choice((-10**120, -10**5, -1, 0, 1, 10**5, 10**120))
+                 for _ in range(n)]
+            U = n*(n+1)//2
+            m = rng.randrange(max(2,U//2+1), U+1)
+            expected = independent_oracle(a, m)
+            self.assertEqual(solve_deficit(a, m).indices, expected)
+            self.assertEqual(solve_edge_tuple(a, m), expected)
+
+    def test_superconvex_positive_witness_large_n(self):
+        # Independent cardinality-first combination oracle. 3**i has the
+        # property that *every* subsequence is strictly convex, so enumerate
+        # omission sets by size, not by reachability or the T1 DFS.
+        for n, h in ((12, 0), (12, 8), (20, 12),
+                     (20, 24), (35, 12), (35, 40)):
+            a = [3**i for i in range(n)]
+            U = n*(n+1)//2
+            solutions = None
+            for count in range(0, 4):
+                omissions = (combo for combo in
+                             itertools.combinations(range(1, n+1), count)
+                             if sum(combo) == h)
+                candidates = [tuple(i for i in range(1, n+1)
+                                    if i not in combo)
+                              for combo in omissions]
+                if candidates:
+                    solutions = candidates
+                    break
+            self.assertIsNotNone(solutions)
+            expected = min(solutions)
+            self.assertTrue(verify(a, U-h, expected))
+            out = solve_deficit(a, U-h)
+            self.assertEqual(out.status, 'OPTIMAL')
+            self.assertEqual(out.indices, expected, (n, h))
+
+    def test_budget_and_domain(self):
+        a = [i*i for i in range(12)]
+        U = 78
+        expected = independent_oracle(a, U-7)
+        for budget in (0, 1, 3, 10, 20):
+            for K in (None, 1, len(expected), len(expected)+1):
+                got = solve_deficit(a, U-7, K=K, max_operations=budget)
+                self.assertIn(got.status, ('RESOURCE_LIMIT', 'FEASIBLE', 'INFEASIBLE', 'OPTIMAL'))
+                self.assertTrue(verify(a, U-7, got.indices))
+                self.assertLessEqual(got.lower_bound, len(expected))
+                self.assertGreaterEqual(got.upper_bound, len(expected))
+                if got.status == 'FEASIBLE':
+                    self.assertGreaterEqual(len(got.indices), K)
+                if got.status == 'INFEASIBLE':
+                    self.assertGreater(K, len(expected))
+        for bad in (-1, 1.0, True, float('inf')):
+            with self.assertRaises(ValueError):
+                solve_deficit(a, U-7, max_operations=bad)
+        for m in (2, U+1):
+            with self.assertRaises(ValueError):
+                solve_deficit(a, m)
+
+    def test_long_prefix_does_not_recurse(self):
+        # q=1100 is above the default CPython recursion limit.
+        n = 1100
+        a = [i*i for i in range(n)]
+        U = n*(n+1)//2
+        out = solve_deficit(a, U-1100, max_operations=1250000)
+        self.assertIn(out.status, ('RESOURCE_LIMIT', 'OPTIMAL'))
+        self.assertTrue(verify(a, U-1100, out.indices))
+
+
+class BenchmarkPortability(unittest.TestCase):
+    def test_missing_unix_resource_module_keeps_benchmark_usable(self):
+        # Simulate a Windows-style missing standard-library resource module
+        # on Linux CI. This does not claim native Windows execution.
+        import builtins
+        import contextlib
+        import io
+        import json
+        from unittest.mock import patch
+
+        benchmark_path = BASE / 'experiments/v03/benchmark.py'
+        real_import = builtins.__import__
+
+        def missing_resource(name, *args, **kwargs):
+            if name == 'resource':
+                raise ImportError('simulated missing resource module')
+            return real_import(name, *args, **kwargs)
+
+        with patch('builtins.__import__', side_effect=missing_resource):
+            spec = importlib.util.spec_from_file_location(
+                'v03_benchmark_portability_test', benchmark_path)
+            benchmark = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(benchmark)
+        self.assertIsNone(benchmark.resource)
+
+        cfg = {'algorithm': 'deficit', 'a': [0, 1, 3],
+               'm': 6, 'repetitions': 1}
+        output = io.StringIO()
+        with patch.object(benchmark.sys, 'stdin', io.StringIO(json.dumps(cfg))):
+            with contextlib.redirect_stdout(output):
+                benchmark.worker()
+        actual = json.loads(output.getvalue())
+        self.assertEqual(actual['witness'], [1, 2, 3])
+        self.assertIsNone(actual['peak_rss_kib_linux'])
+        self.assertGreaterEqual(actual['traced_peak_bytes'], 0)
+
+
+if __name__ == '__main__':
+    unittest.main()
