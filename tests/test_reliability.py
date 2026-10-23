@@ -57,16 +57,47 @@ class Exactness(unittest.TestCase):
                     self.assertGreaterEqual(len(got.indices), K)
 
     def test_pure_index_bounds(self):
+        # Independent subset-sum/cardinality DP, with no upper-bound formula.
+        # This tests sizes 10..15 rather than substituting a placeholder zero.
         for n in range(16):
             for m in range(2, n * (n + 1) // 2 + 5):
+                attainable = {(0, 0)}
+                for idx in range(1, n + 1):
+                    attainable |= {(length + 1, (residue + idx) % m)
+                                   for length, residue in attainable}
+                exact_index_opt = max(length for length, residue in attainable
+                                      if residue == 0)
                 ub = index_only_upper(n, m)
-                self.assertGreaterEqual(ub, 0)
-                self.assertLessEqual(ub, n)
-                for values in ((0,) * n, tuple(i*i for i in range(n))):
-                    self.assertLessEqual(len(oracle(values, m)) if n <= 9 else 0, ub)
+                self.assertEqual(ub, exact_index_opt, (n, m))
+                if n <= 9:
+                    for values in ((0,) * n, tuple(i*i for i in range(n))):
+                        self.assertLessEqual(len(oracle(values, m)), ub)
 
 
 class ResourceReliability(unittest.TestCase):
+    def test_invalid_budget_values(self):
+        arr = [0, 1, 3]
+        invalid_integer_budgets = (float('nan'), float('inf'), float('-inf'),
+                                   1.0, 1.5, -1, True, '10')
+        for name in ('max_operations', 'max_heap_bytes'):
+            for value in invalid_integer_budgets:
+                with self.subTest(name=name, value=repr(value)):
+                    with self.assertRaises(ValueError):
+                        solve(arr, 6, K=0, **{name: value})
+        for value in (float('nan'), float('inf'), float('-inf'),
+                      -0.5, True, '10'):
+            with self.subTest(name='max_seconds', value=repr(value)):
+                with self.assertRaises(ValueError):
+                    solve(arr, 6, K=0, max_seconds=value)
+        # Integer counts, finite fractional seconds and huge positive integers
+        # remain valid. K=0 ensures input validation precedes fast shortcuts.
+        for name, value in (('max_operations', 0), ('max_heap_bytes', 0),
+                            ('max_seconds', 0), ('max_seconds', 0.125),
+                            ('max_seconds', 10**500)):
+            with self.subTest(name=name, value=repr(value)):
+                self.assertEqual(solve(arr, 6, K=0, **{name: value}).status,
+                                 'FEASIBLE')
+
     def test_adaptive_dense_payload_bytes(self):
         for n, m in [(0, 2), (1, 200), (12, 7), (150, 25),
                      (32767, 2), (32768, 2), (65535, 2), (65536, 2)]:

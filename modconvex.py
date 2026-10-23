@@ -6,6 +6,7 @@ Input indices 1-based, signed arbitrary-precision values.
 from __future__ import annotations
 from array import array
 from dataclasses import dataclass
+import math
 import time
 import tracemalloc
 from typing import Optional
@@ -82,12 +83,24 @@ def solve(a, m, *, K=None, max_operations=None, max_seconds=None,
         raise ValueError('K must be an integer')
     if not isinstance(complement_cutoff,int) or not 0 <= complement_cutoff <= 20:
         raise ValueError('complement_cutoff must be in 0..20')
-    if max_operations is not None and max_operations < 0:
-        raise ValueError('max_operations must be >= 0')
-    if max_seconds is not None and max_seconds < 0:
-        raise ValueError('max_seconds must be >= 0')
-    if max_heap_bytes is not None and max_heap_bytes < 0:
-        raise ValueError('max_heap_bytes must be >= 0')
+    # Nonfinite or mistyped budgets must not silently disable resource checks.
+    if max_operations is not None and (
+        isinstance(max_operations, bool) or not isinstance(max_operations, int)
+        or max_operations < 0
+    ):
+        raise ValueError('max_operations must be a nonnegative integer')
+    if max_seconds is not None and (
+        isinstance(max_seconds, bool)
+        or not isinstance(max_seconds, (int, float))
+        or max_seconds < 0
+        or (isinstance(max_seconds, float) and not math.isfinite(max_seconds))
+    ):
+        raise ValueError('max_seconds must be a finite nonnegative number')
+    if max_heap_bytes is not None and (
+        isinstance(max_heap_bytes, bool) or not isinstance(max_heap_bytes, int)
+        or max_heap_bytes < 0
+    ):
+        raise ValueError('max_heap_bytes must be a nonnegative integer')
 
     start = time.monotonic()
     check_preprocessing = max_seconds is not None or max_heap_bytes is not None

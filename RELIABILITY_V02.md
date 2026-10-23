@@ -61,6 +61,11 @@ initialization cannot be preempted safely in-process. Hard limits require
 an external process/OS supervisor and may terminate the process without a
 recoverable `Result`.
 
+Budget validation rejects NaN, infinities, booleans and nonnumeric inputs.
+Operation and heap byte budgets must be nonnegative integers; the soft time
+budget accepts finite nonnegative integers or floats (including fractions).
+An omitted budget (`None`) remains unbounded.
+
 `K>n`, `m>U` and `K<=0` remain logically proved shortcuts and need not
 be rejected just because the requested budget is zero. Resource checks can
 return `RESOURCE_LIMIT` instead of a proven result when the soft budget is
@@ -96,7 +101,11 @@ witness validity, memory estimates, bounded interruptions, and original
 oracle comparisons.
 
 `benchmarks/compare_v02.py` loads original main-branch and candidate solver
-as distinct modules and runs paired, deterministic cases. CI uploads the
+as distinct modules and runs paired, deterministic cases. CI pins its original
+main-branch comparison checkout to the PR's immutable base commit
+`e8c5f0461beaf975ab7acaa1e35ced9f2d09a276`. The artifact records SHA-256 checksums
+and resolved Git revisions for both solver sources, and rejects baseline drift
+when `MOCOSO_BASELINE_SHA` supplies the expected commit. CI uploads the
 `v02_comparison.json` measurements. Results are traced-heap peaks and
 *instrumented* times; `tracemalloc` overhead is included and this is not a
 controlled hardware performance superiority claim. Complement shortcut rows

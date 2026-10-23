@@ -4,9 +4,12 @@ Run: python benchmarks/compare_v02.py baseline_original/modconvex.py modconvex.p
 Timings are descriptive, not asymptotic proofs or controlled speed claims.
 """
 import gc
+import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
+import subprocess
 import statistics
 import sys
 import time
@@ -19,6 +22,19 @@ def import_source(name, path):
     sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def provenance(path):
+    path = Path(path).resolve()
+    try:
+        git_sha = subprocess.check_output(
+            ['git', '-C', str(path.parent), 'rev-parse', 'HEAD'],
+            stderr=subprocess.DEVNULL, text=True
+        ).strip()
+    except (OSError, subprocess.CalledProcessError):
+        git_sha = None
+    return {'git_commit': git_sha,
+            'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
 
 
 def uninstrumented(solver, a, m):
@@ -59,6 +75,13 @@ def sample(solver, a, m):
 def main():
     if len(sys.argv) != 3:
         raise SystemExit('usage: python benchmarks/compare_v02.py OLD.py NEW.py')
+    baseline = provenance(sys.argv[1])
+    candidate = provenance(sys.argv[2])
+    expected_baseline = os.environ.get('MOCOSO_BASELINE_SHA')
+    if expected_baseline and baseline['git_commit'] != expected_baseline:
+        raise AssertionError(
+            f'benchmark baseline drift: {baseline["git_commit"]} != {expected_baseline}'
+        )
     old = import_source('mocoso_pre_v02', Path(sys.argv[1]).resolve())
     new = import_source('mocoso_current_v02', Path(sys.argv[2]).resolve())
     edge = import_source('mocoso_independent_edge', Path('edge_dp.py').resolve())
@@ -92,6 +115,8 @@ def main():
         data.append(row)
         print(json.dumps(row, sort_keys=True), flush=True)
     output = {'baseline_file': sys.argv[1], 'candidate_file': sys.argv[2],
+              'baseline_source': baseline, 'candidate_source': candidate,
+              'expected_baseline_sha': expected_baseline,
               'cases': data, 'python': sys.version}
     target = Path('v02_comparison.json')
     target.write_text(json.dumps(output, indent=2) + '\n', encoding='utf-8')
