@@ -1,0 +1,62 @@
+name: MOCOSO independent G2 falsification
+
+on:
+  pull_request:
+    paths:
+      - 'research/v03/prepaper/**'
+      - '.github/workflows/v03-g2-proof-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONHASHSEED: '0'
+  PYTHONPATH: '.'
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: 'core.autocrlf'
+  GIT_CONFIG_VALUE_0: 'false'
+
+jobs:
+  independent-g2:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.11', '3.13']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Confirm source and historical proof untouched
+        shell: bash
+        run: |
+          git diff --exit-code 7595130fecb1a21dc8ca8823d9ee8d5d136af97a -- modconvex.py edge_dp.py experiments/v03/deficit.py experiments/v03/baselines.py research/v03/t1_deficit_proof.md
+      - name: Execute independently coded exhaustive oracle and falsification
+        shell: bash
+        run: |
+          set -o pipefail
+          python research/v03/prepaper/g2_independent_checks.py 2>&1 | tee g2_test_results.txt
+      - name: Record execution provenance
+        if: always()
+        shell: bash
+        run: |
+          python -VV > g2_environment.txt
+          python -c "import platform; print(platform.platform(), platform.processor())" >> g2_environment.txt
+          git rev-parse HEAD >> g2_environment.txt
+          python -c "import hashlib, pathlib; p=pathlib.Path('research/v03/prepaper/g2_independent_checks.py'); print('G2_script_sha256',hashlib.sha256(p.read_bytes()).hexdigest())" >> g2_environment.txt
+      - name: Upload raw run logs even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g2-proof-falsification-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: |
+            g2_test_results.txt
+            g2_environment.txt
+          retention-days: 90
+          if-no-files-found: warn
