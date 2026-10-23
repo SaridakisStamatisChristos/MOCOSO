@@ -27,3 +27,24 @@ jobs:
         run: python extra_trials.py
       - name: Reliability regression suite
         run: python -m unittest discover -s tests -p 'test_*.py' -v
+
+  comparison:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: baseline_original
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Paired old/new exactness, heap and runtime evidence
+        run: python benchmarks/compare_v02.py baseline_original/modconvex.py modconvex.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v02-comparison
+          path: v02_comparison.json
+          if-no-files-found: ignore
