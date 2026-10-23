@@ -21,6 +21,25 @@ class Result:
     reason: str = ''
 
 
+def _dense_codes(n):
+    """Smallest portable array fields covering all DP lengths and indices."""
+    lengths = 'h' if n <= 32767 else ('i' if n <= 2147483647 else 'q')
+    successors = 'H' if n <= 65535 else ('I' if n <= 4294967295 else 'Q')
+    return lengths, successors
+
+
+def dense_dp_payload_bytes(n, m):
+    """Exact payload bytes of both dense tables on this Python platform.
+
+    This excludes Python objects, input, sorting, temporary sweep buffers, and
+    allocator overhead; it is a necessary, not sufficient, memory budget.
+    """
+    if not isinstance(n, int) or n < 0 or not isinstance(m, int) or m < 2:
+        raise ValueError('n must be nonnegative and m >= 2')
+    lc, sc = _dense_codes(n)
+    return (n * (n - 1) // 2) * m * (array(lc).itemsize + array(sc).itemsize)
+
+
 def verify(a, m, selected):
     if not isinstance(m, int) or m < 2:
         raise ValueError('m must be an integer >= 2')
@@ -85,11 +104,19 @@ def solve(a, m, *, K=None, max_operations=None, max_seconds=None,
     best = ()
     chosen_head = ()
     chosen_len = 0
-    asc = sorted(range(1, n + 1), key=lambda i: a[i-1]) if m <= U else []
-    d = sum(t == 0 or a[asc[t]-1] != a[asc[t-1]-1]
-            for t in range(len(asc)))
-    ub = 0 if m > U else min(index_only_upper(n, m), d * (d - 1) + 2)
+    # The coarse n bound is valid during preprocessing interruptions.
+    ub = n
+    asc = []
+    d = 0
     lengths = successors = None
+    def limit():
+        if max_operations is not None and ops > max_operations:
+            return 'operation budget'
+        if max_seconds is not None and time.monotonic() - start > max_seconds:
+            return 'soft time budget'
+        if max_heap_bytes is not None and tracemalloc.get_traced_memory()[0] > max_heap_bytes:
+            return 'soft traced-heap budget'
+        return ''
     def offset(i, j):
         return ((i - 1) * (2 * n - i) // 2 + (j - i - 1)) * m
 
@@ -125,6 +152,24 @@ def solve(a, m, *, K=None, max_operations=None, max_seconds=None,
     try:
         if K is not None and K <= 0:
             return answer('FEASIBLE', 'empty witness')
+        if m > U:
+            ub = 0
+            return answer('OPTIMAL' if K is None else 'INFEASIBLE',
+                          'no nonempty index sum divisible by modulus')
+        exceeded = limit()
+        if exceeded:
+            return answer('RESOURCE_LIMIT', exceeded)
+        # The built-in sort is not interruptible; check its limits on both sides.
+        asc = sorted(range(1, n + 1), key=lambda i: a[i-1])
+        d = sum(t == 0 or a[asc[t]-1] != a[asc[t-1]-1]
+                for t in range(len(asc)))
+        exceeded = limit()
+        if exceeded:
+            return answer('RESOURCE_LIMIT', exceeded)
+        ub = min(index_only_upper(n, m), d * (d - 1) + 2)
+        exceeded = limit()
+        if exceeded:
+            return answer('RESOURCE_LIMIT', exceeded)
         if K is not None and K > ub:
             return answer('INFEASIBLE', 'index-sum upper bound')
         if ub == 0:
@@ -134,6 +179,10 @@ def solve(a, m, *, K=None, max_operations=None, max_seconds=None,
             if m <= n:
                 offer((m,))  # lex-first modular singleton
             for i in range(1, n):
+                if i % 128 == 0:
+                    exceeded = limit()
+                    if exceeded:
+                        return answer('RESOURCE_LIMIT', exceeded)
                 # Smallest j>i with i+j == 0 (mod m).
                 j = i + 1 + ((-2 * i - 1) % m)
                 if j <= n:
@@ -170,41 +219,44 @@ def solve(a, m, *, K=None, max_operations=None, max_seconds=None,
                           'complete complement enumeration')
         # Baseline witnesses before the expensive DP are certified.
         for i in range(1, n + 1):
+            if i % 128 == 0:
+                exceeded = limit()
+                if exceeded:
+                    return answer('RESOURCE_LIMIT', exceeded)
             if i % m == 0:
                 offer((i,))
         if K is not None and chosen_len >= K:
             return answer('FEASIBLE', 'singleton witness')
         for i in range(1, n):
+            exceeded = limit()
+            if exceeded:
+                return answer('RESOURCE_LIMIT', exceeded)
             for j in range(i + 1, n + 1):
+                if j % 256 == 0:
+                    exceeded = limit()
+                    if exceeded:
+                        return answer('RESOURCE_LIMIT', exceeded)
                 if (i + j) % m == 0:
                     offer((i, j))
         if K is not None and chosen_len >= K:
             return answer('FEASIBLE', 'pair witness')
         if ub <= 2:
             return answer('OPTIMAL' if K is None else 'INFEASIBLE', 'upper bound at most two')
-        # Ensure resource budgets are checked even before allocation.
-        def limit():
-            if max_operations is not None and ops > max_operations:
-                return 'operation budget'
-            if max_seconds is not None and time.monotonic() - start > max_seconds:
-                return 'soft time budget'
-            if max_heap_bytes is not None and tracemalloc.get_traced_memory()[0] > max_heap_bytes:
-                return 'soft traced-heap budget'
-            return ''
+        # Check again before computing and allocating the DP tables.
         exceeded = limit()
         if exceeded:
             return answer('RESOURCE_LIMIT', exceeded)
 
         pairs = n * (n - 1) // 2
         slots = pairs * m
+        length_code, successor_code = _dense_codes(n)
         if max_heap_bytes is not None:
-            # Proven *minimum* for two dense arrays; preempt obviously
-            # unaffordable allocations before asking the OS for memory.
-            mandatory_bytes = 2 * slots * array('i').itemsize
+            # Proven minimum payload; do not pretend this is a hard RSS limit.
+            mandatory_bytes = dense_dp_payload_bytes(n, m)
             if mandatory_bytes + tracemalloc.get_traced_memory()[0] > max_heap_bytes:
                 return answer('RESOURCE_LIMIT', 'DP-array preflight exceeds traced-heap budget')
-        lengths = array('i', [-1]) * slots
-        successors = array('i', [0]) * slots
+        lengths = array(length_code, [-1]) * slots
+        successors = array(successor_code, [0]) * slots
 
         desc = asc[::-1]
         # Iteration is by SECOND index descending, so all (j,k) are ready.
