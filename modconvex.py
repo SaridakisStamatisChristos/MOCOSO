@@ -90,6 +90,7 @@ def solve(a, m, *, K=None, max_operations=None, max_seconds=None,
         raise ValueError('max_heap_bytes must be >= 0')
 
     start = time.monotonic()
+    check_preprocessing = max_seconds is not None or max_heap_bytes is not None
     monitoring_started = False
     if max_heap_bytes is not None and not tracemalloc.is_tracing():
         tracemalloc.start()
@@ -179,7 +180,7 @@ def solve(a, m, *, K=None, max_operations=None, max_seconds=None,
             if m <= n:
                 offer((m,))  # lex-first modular singleton
             for i in range(1, n):
-                if i % 128 == 0:
+                if check_preprocessing and i % 128 == 0:
                     exceeded = limit()
                     if exceeded:
                         return answer('RESOURCE_LIMIT', exceeded)
@@ -219,7 +220,7 @@ def solve(a, m, *, K=None, max_operations=None, max_seconds=None,
                           'complete complement enumeration')
         # Baseline witnesses before the expensive DP are certified.
         for i in range(1, n + 1):
-            if i % 128 == 0:
+            if check_preprocessing and i % 128 == 0:
                 exceeded = limit()
                 if exceeded:
                     return answer('RESOURCE_LIMIT', exceeded)
@@ -228,11 +229,12 @@ def solve(a, m, *, K=None, max_operations=None, max_seconds=None,
         if K is not None and chosen_len >= K:
             return answer('FEASIBLE', 'singleton witness')
         for i in range(1, n):
-            exceeded = limit()
-            if exceeded:
-                return answer('RESOURCE_LIMIT', exceeded)
+            if check_preprocessing:
+                exceeded = limit()
+                if exceeded:
+                    return answer('RESOURCE_LIMIT', exceeded)
             for j in range(i + 1, n + 1):
-                if j % 256 == 0:
+                if check_preprocessing and j % 256 == 0:
                     exceeded = limit()
                     if exceeded:
                         return answer('RESOURCE_LIMIT', exceeded)
