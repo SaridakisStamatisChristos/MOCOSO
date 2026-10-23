@@ -43,12 +43,14 @@ def sample(solver, a, m):
         duration = time.perf_counter() - started
         peak = tracemalloc.get_traced_memory()[1]
         tracemalloc.stop()
-        assert result.status == 'OPTIMAL'
+        indices = result.indices if hasattr(result, 'indices') else tuple(result)
+        if hasattr(result, 'status'):
+            assert result.status == 'OPTIMAL'
         times.append(duration)
         peaks.append(peak)
         if sol is not None:
-            assert result.indices == sol
-        sol = result.indices
+            assert indices == sol
+        sol = indices
     return {'median_instrumented_s': statistics.median(times),
             'median_traced_peak_bytes': statistics.median(peaks),
             'times_s': times, 'peaks_bytes': peaks, 'indices': sol}
@@ -59,6 +61,7 @@ def main():
         raise SystemExit('usage: python benchmarks/compare_v02.py OLD.py NEW.py')
     old = import_source('mocoso_pre_v02', Path(sys.argv[1]).resolve())
     new = import_source('mocoso_current_v02', Path(sys.argv[2]).resolve())
+    edge = import_source('mocoso_independent_edge', Path('edge_dp.py').resolve())
     cases = [(50, 20, 'convex'), (100, 30, 'convex'),
              (100, 2, 'convex'), (80, 30, 'alternating'),
              (50, 1265, 'complement')]
@@ -71,7 +74,12 @@ def main():
             m = n*(n+1)//2 - 10
         left = sample(old.solve, a, m)
         right = sample(new.solve, a, m)
-        assert left.pop('indices') == right.pop('indices')
+        expected = left.pop('indices')
+        assert expected == right.pop('indices')
+        edge_evidence = None
+        if kind != 'complement':
+            edge_evidence = sample(edge.solve_edge, a, m)
+            assert edge_evidence.pop('indices') == expected
         old_fast = uninstrumented(old.solve, a, m)
         new_fast = uninstrumented(new.solve, a, m)
         slots = n*(n-1)//2*m
@@ -79,7 +87,8 @@ def main():
                'old_dense_array_payload_bytes': 8*slots,
                'new_dense_array_payload_bytes': new.dense_dp_payload_bytes(n,m),
                'baseline': left, 'candidate': right,
-               'untraced_baseline': old_fast, 'untraced_candidate': new_fast}
+               'untraced_baseline': old_fast, 'untraced_candidate': new_fast,
+               'independent_edge': edge_evidence}
         data.append(row)
         print(json.dumps(row, sort_keys=True), flush=True)
     output = {'baseline_file': sys.argv[1], 'candidate_file': sys.argv[2],
