@@ -16,7 +16,7 @@ Competitors:
 
 ## Registered benchmark grid and scope
 
-n,h,family: (12,3,convex), (12,8,alternating), (20,7,convex), (20,12,alternating), (20,8,equal), (20,10,huge-signed), (35,5,convex), (35,12,alternating). For each, m=U-h and thus U/2<m<=U. Arrays are deterministic; no parameter tuning after results. Tuple edge comparator is restricted to n<=20 for cost control. Report omitted comparator cells rather than implying universal coverage.
+**Original preregistered grid:** n,h,family: (12,3,convex), (12,8,alternating), (20,7,convex), (20,12,alternating), (20,8,equal), (20,10,huge-signed), (35,5,convex), (35,12,alternating). **Post-hoc coverage repair (added after seeing initial raw CI output):** (12,8,superconvex), (20,12,superconvex), (35,12,superconvex), (20,24,superconvex), (35,40,superconvex). Here superconvex means A[i]=3**i (0-based Python indexing), guaranteeing every subsequence is strictly convex. This repairs the initial workload's overrepresentation of empty optima and deliberately includes h>n. Report the two sets separately; do NOT mislabel the added cases preregistered. For each, m=U-h and U/2<m<=U. Tuple edge comparator is restricted to n<=20, and the 2^q isolated mask comparator to q<=12, for bounded cost. Report omitted cells explicitly.
 
 Command from repository root:
 
