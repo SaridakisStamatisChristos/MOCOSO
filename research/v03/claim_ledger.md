@@ -9,7 +9,7 @@ Baseline: v0.2 main 9cedac0d0f860564d5ee1a9064b01ef56ac2a764. Status date 2026-1
 | Immutable suffix locality | SUPPORTED derivation | Proposition 2 and exhaustive test code | Independent proof reader |
 | O(n+qh+qP_d(h)) arithmetic-word time, O(qh+q) auxiliary words | PARTIAL | Proof draft and prototype; modeling caveats explicit | Independent complexity review; memory measurement |
 | P_d(h)<=exp(2 sqrt h) | SUPPORTED derivation | Classical generating-function inequality | Independent proof reader; credit classical literature |
-| Exact lex optimum and threshold decisions | PARTIAL | Brute-force differential code; local run: 41,085 exhaustive instances and 250 seeded cases | GitHub CI completed; independent auditor |
+| Exact lex optimum and threshold decisions | PARTIAL | Independent all-subsets oracle: 41,085 exhaustive cases plus 250 signed seeded; v0.3 CI passed on Python 3.10–3.13, run 39953542302 | Independent mathematical and adversarial review |
 | Observed T1 high-modulus runtime vs v0.2 | PARTIAL | Raw single-runner GitHub Actions benchmark: 13 workloads, 59 comparator cells, 3 repetitions; see ci_evidence_2026-10-23.md. Post-hoc positive-answer cases disclosed | Independent second environment and complete distribution before a broad claim |
 | T1 is genuinely novel in literature | UNRESOLVED | Bounded search, no comprehensive citation traversal | Finish M0 |
 | T2 lower-bit-memory exact edge DP | UNRESOLVED | Only investigation outline; tuple comparator is **not** the solution | Derive algorithm/proof or document failure |
