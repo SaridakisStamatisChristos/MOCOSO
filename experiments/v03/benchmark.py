@@ -28,6 +28,8 @@ from edge_dp import solve_edge
 def case_data(n, kind):
     if kind == 'convex':
         return [i*i for i in range(n)]
+    if kind == 'superconvex':
+        return [3**i for i in range(n)]
     if kind == 'alternating':
         return [(-1)**i * (i*i + 1) for i in range(n)]
     if kind == 'equal':
@@ -101,12 +103,19 @@ def main():
     cases = [(12, 3, 'convex'), (12, 8, 'alternating'),
              (20, 7, 'convex'), (20, 12, 'alternating'),
              (20, 8, 'equal'), (20, 10, 'huge'),
-             (35, 5, 'convex'), (35, 12, 'alternating')]
+             (35, 5, 'convex'), (35, 12, 'alternating'),
+             # Post-hoc coverage repair: original grid was dominated by
+             # zero-length answers. Keep labeled and report separately.
+             (12, 8, 'superconvex'), (20, 12, 'superconvex'),
+             (35, 12, 'superconvex'), (20, 24, 'superconvex'),
+             (35, 40, 'superconvex')]
     jobs = []
     for n, h, family in cases:
         U = n*(n+1)//2
         m = U - h
-        algorithms = ['deficit', 'v02', 'mask_isolated', 'edge_bitmask']
+        algorithms = ['deficit', 'v02', 'edge_bitmask']
+        if min(n,h) <= 12:
+            algorithms.append('mask_isolated')
         if n <= 20:
             algorithms.append('edge_tuple')
         for name in algorithms:
@@ -149,7 +158,8 @@ def main():
                        'tracemalloc bytes are Python tracked peak, not total RSS',
                        'counted operations differ by algorithm and cannot be compared directly',
                        'timing includes witness reconstruction, excludes subprocess startup',
-                       'no hard memory limit or external timeout semantics claimed']}
+                       'no hard memory limit or external timeout semantics claimed',
+                       'the superconvex cases were added after initial data as a disclosed coverage repair']}
     Path(args.output).write_text(json.dumps(report, indent=2)+'\n')
     print('comparison cases verified; raw report:', args.output)
 
