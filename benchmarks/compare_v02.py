@@ -21,6 +21,16 @@ def import_source(name, path):
     return module
 
 
+def uninstrumented(solver, a, m):
+    values = []
+    for _ in range(5):
+        t0 = time.perf_counter()
+        output = solver(a, m)
+        values.append(time.perf_counter() - t0)
+        assert output.status == 'OPTIMAL'
+    return {'median_s': statistics.median(values), 'times_s': values}
+
+
 def sample(solver, a, m):
     times = []
     peaks = []
@@ -62,11 +72,14 @@ def main():
         left = sample(old.solve, a, m)
         right = sample(new.solve, a, m)
         assert left.pop('indices') == right.pop('indices')
+        old_fast = uninstrumented(old.solve, a, m)
+        new_fast = uninstrumented(new.solve, a, m)
         slots = n*(n-1)//2*m
         row = {'n': n, 'm': m, 'family': kind,
                'old_dense_array_payload_bytes': 8*slots,
                'new_dense_array_payload_bytes': new.dense_dp_payload_bytes(n,m),
-               'baseline': left, 'candidate': right}
+               'baseline': left, 'candidate': right,
+               'untraced_baseline': old_fast, 'untraced_candidate': new_fast}
         data.append(row)
         print(json.dumps(row, sort_keys=True), flush=True)
     output = {'baseline_file': sys.argv[1], 'candidate_file': sys.argv[2],
