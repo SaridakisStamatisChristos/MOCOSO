@@ -10,12 +10,16 @@ import os
 from pathlib import Path
 import platform
 import random
-import resource
 import statistics
 import subprocess
 import sys
 import time
 import tracemalloc
+
+try:
+    import resource  # Available on Unix; Windows has no resource module.
+except ImportError:
+    resource = None
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -81,7 +85,7 @@ def worker():
     print(json.dumps({'algorithm': name, 'witness': expected,
                       'runtime_ns': timings, 'traced_peak_bytes': traced_peak,
                       'peak_rss_kib_linux': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-                          if sys.platform.startswith('linux') else None,
+                          if sys.platform.startswith('linux') and resource is not None else None,
                       'counters': counters}))
 
 
@@ -154,7 +158,7 @@ def main():
               'repetitions':args.repetitions, 'python':sys.version,
               'platform':platform.platform(), 'processor':platform.processor(),
               'cpu_count':os.cpu_count(), 'rows':rows,
-              'notes':['peak_rss_kib_linux is process peak including imports and warmup',
+              'notes':['peak_rss_kib_linux is process peak including imports and warmup; null if unavailable',
                        'tracemalloc bytes are Python tracked peak, not total RSS',
                        'counted operations differ by algorithm and cannot be compared directly',
                        'timing includes witness reconstruction, excludes subprocess startup',

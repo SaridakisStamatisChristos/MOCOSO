@@ -145,5 +145,42 @@ class DeficitFalsification(unittest.TestCase):
         self.assertTrue(verify(a, U-1100, out.indices))
 
 
+class BenchmarkPortability(unittest.TestCase):
+    def test_missing_unix_resource_module_keeps_benchmark_usable(self):
+        # Simulate a Windows-style missing standard-library resource module
+        # on Linux CI. This does not claim native Windows execution.
+        import builtins
+        import contextlib
+        import io
+        import json
+        from unittest.mock import patch
+
+        benchmark_path = BASE / 'experiments/v03/benchmark.py'
+        real_import = builtins.__import__
+
+        def missing_resource(name, *args, **kwargs):
+            if name == 'resource':
+                raise ImportError('simulated missing resource module')
+            return real_import(name, *args, **kwargs)
+
+        with patch('builtins.__import__', side_effect=missing_resource):
+            spec = importlib.util.spec_from_file_location(
+                'v03_benchmark_portability_test', benchmark_path)
+            benchmark = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(benchmark)
+        self.assertIsNone(benchmark.resource)
+
+        cfg = {'algorithm': 'deficit', 'a': [0, 1, 3],
+               'm': 6, 'repetitions': 1}
+        output = io.StringIO()
+        with patch.object(benchmark.sys, 'stdin', io.StringIO(json.dumps(cfg))):
+            with contextlib.redirect_stdout(output):
+                benchmark.worker()
+        actual = json.loads(output.getvalue())
+        self.assertEqual(actual['witness'], [1, 2, 3])
+        self.assertIsNone(actual['peak_rss_kib_linux'])
+        self.assertGreaterEqual(actual['traced_peak_bytes'], 0)
+
+
 if __name__ == '__main__':
     unittest.main()
