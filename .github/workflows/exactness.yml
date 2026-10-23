@@ -1,0 +1,53 @@
+name: MOCOSO exact solver
+on:
+  push:
+    branches: [main, mocoso-v0.2-reliability]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  exactness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile
+        run: python -m compileall -q modconvex.py edge_dp.py
+      - name: Main exhaustive and benchmark suite
+        run: python research_tests.py
+      - name: Independent edge DP oracle suite
+        run: python edge_trials.py
+      - name: Alternative and resource-regime suite
+        run: python extra_trials.py
+      - name: Reliability regression suite
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+
+  comparison:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          # Immutable original PR base, not the moving main branch.
+          ref: e8c5f0461beaf975ab7acaa1e35ced9f2d09a276
+          path: baseline_original
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Paired old/new exactness, heap and runtime evidence
+        env:
+          MOCOSO_BASELINE_SHA: e8c5f0461beaf975ab7acaa1e35ced9f2d09a276
+        run: python benchmarks/compare_v02.py baseline_original/modconvex.py modconvex.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v02-comparison
+          path: v02_comparison.json
+          if-no-files-found: ignore
