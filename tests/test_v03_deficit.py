@@ -87,6 +87,32 @@ class DeficitFalsification(unittest.TestCase):
             self.assertEqual(solve_deficit(a, m).indices, expected)
             self.assertEqual(solve_edge_tuple(a, m), expected)
 
+    def test_superconvex_positive_witness_large_n(self):
+        # Independent cardinality-first combination oracle. 3**i has the
+        # property that *every* subsequence is strictly convex, so enumerate
+        # omission sets by size, not by reachability or the T1 DFS.
+        for n, h in ((12, 0), (12, 8), (20, 12),
+                     (20, 24), (35, 12), (35, 40)):
+            a = [3**i for i in range(n)]
+            U = n*(n+1)//2
+            solutions = None
+            for count in range(0, 4):
+                omissions = (combo for combo in
+                             itertools.combinations(range(1, n+1), count)
+                             if sum(combo) == h)
+                candidates = [tuple(i for i in range(1, n+1)
+                                    if i not in combo)
+                              for combo in omissions]
+                if candidates:
+                    solutions = candidates
+                    break
+            self.assertIsNotNone(solutions)
+            expected = min(solutions)
+            self.assertTrue(verify(a, U-h, expected))
+            out = solve_deficit(a, U-h)
+            self.assertEqual(out.status, 'OPTIMAL')
+            self.assertEqual(out.indices, expected, (n, h))
+
     def test_budget_and_domain(self):
         a = [i*i for i in range(12)]
         U = 78
