@@ -1,0 +1,53 @@
+name: MOCOSO v0.3 research evidence
+
+on:
+  pull_request:
+    paths:
+      - 'experiments/v03/**'
+      - 'tests/test_v03_deficit.py'
+      - 'research/v03/**'
+      - '.github/workflows/v03-research.yml'
+  workflow_dispatch:
+
+jobs:
+  v03-falsification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile isolated research files
+        run: python -m compileall -q experiments/v03 tests/test_v03_deficit.py
+      - name: Research exhaustive and differential tests
+        run: python -m unittest discover -s tests -p 'test_v03_deficit.py' -v
+
+  v03-raw-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Hardware provenance
+        run: |
+          (lscpu || true) > v03_hardware.txt
+          (free -h || true) >> v03_hardware.txt
+          (uname -a || true) >> v03_hardware.txt
+      - name: Run preregistered exact comparison
+        run: python experiments/v03/benchmark.py --output v03_raw.json --repetitions 3 --seed 20261023
+      - name: Upload raw evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v03-raw-benchmark
+          path: |
+            v03_raw.json
+            v03_hardware.txt
+          if-no-files-found: ignore
