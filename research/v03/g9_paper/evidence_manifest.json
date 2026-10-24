@@ -40,5 +40,96 @@
     "note": "Executed in disposable detached worktree. Original committed evidence unchanged. Timings and allocation bytes are runtime-dependent.",
     "upstream_suite": "6 tests passed",
     "upstream_log_sha256": "3f2b5796b8ebace2e253c60bfdff12f8cdcf68933b4d432fb24d61751809e8cf"
+  },
+  "revision_base": "b23ca44be7f5a0932c209b2b4f80a221830ed8b2",
+  "revision_note": "Manuscript revision only; original evidence and solvers unchanged. The original audit rerun metadata above is historical, not a new run in this revision.",
+  "priority_investigation": {
+    "snapshot": "b23ca44be7f5a0932c209b2b4f80a221830ed8b2",
+    "sha256": {
+      "research/v03/g9_priority/MANUSCRIPT_AMENDMENT.md": "a71b6b486ae2c5ef1c48b885885124173148341826e7c9195db7ce21ad0f9566",
+      "research/v03/g9_priority/PRIOR_ART_REPORT.md": "ed48c2f3cd6caa44467a7ac5638abd488852f63cfe79b8b903860c6a98f34973",
+      "research/v03/g9_priority/README.md": "4e53caa08158da1b87358bb3a9a1d5a46323d67c471b9e8a00f124ef53041d79",
+      "research/v03/g9_priority/SEARCH_LOG.md": "a5b1e818cb820888d29c753b6b5250f8a9c0cb6e2ca57f659c5b94a16c9e79f1",
+      "research/v03/g9_priority/SOURCES.md": "7eeac43c93a1dfa0660378b4c2b6f1e825c2b8f182c2b10472b7650d00b9848d",
+      "research/v03/g9_priority/additions.bib": "b1964622dc58813d8cd8cd1b77b21d3974070cc38b2226c6f1181a864d29ba97",
+      "research/v03/g9_priority/manifest.json": "8109635ac20dfb7ea9fa5c847c3401497ffb1389dd347f4f208ec5a710ba63bf",
+      "research/v03/g9_priority/reduction_checks.py": "08fd3cc213a284d2d74ffe13cac750247710de31e3c56f1fd1f181d8ac6073d4",
+      "research/v03/g9_priority/results.json": "d6e4c76f11f85e1fc5e3432bdc39122f659cf2efee6e778fc77084f4ee77fcfc"
+    },
+    "results": {
+      "status": "PASS",
+      "seed": 20261024,
+      "counts": {
+        "exhaustive_uniform_families": 2228,
+        "random_uniform_families": 3000,
+        "mocoso_instances": 7612,
+        "constrained_scores": 30448,
+        "feasible_instances": 1397,
+        "tied_optimum_instances": 29,
+        "canonical_queries": 2664
+      },
+      "same_weight_bkk_counterexample": {
+        "universe": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "family": [
+          [
+            1,
+            4
+          ],
+          [
+            2,
+            3
+          ]
+        ],
+        "partition_order": [
+          2,
+          3,
+          1,
+          4,
+          5
+        ],
+        "returned": [
+          1,
+          4
+        ],
+        "lexicographic_maximum": [
+          2,
+          3
+        ]
+      },
+      "contiguous_fifo_counterexample": {
+        "n": 4,
+        "family": [
+          [
+            1,
+            2
+          ],
+          [
+            1,
+            3
+          ]
+        ],
+        "returned": [
+          1,
+          2
+        ],
+        "canonical": [
+          1,
+          3
+        ]
+      },
+      "script_sha256": "08fd3cc213a284d2d74ffe13cac750247710de31e3c56f1fd1f181d8ac6073d4",
+      "limitation": "Finite checks support the reduction; they prove neither priority nor asymptotics."
+    },
+    "revision_rerun": {
+      "status": "PASS",
+      "result": "Exact JSON match with preserved results; no evidence rewritten",
+      "output_sha256": "d6e4c76f11f85e1fc5e3432bdc39122f659cf2efee6e778fc77084f4ee77fcfc"
+    }
   }
 }

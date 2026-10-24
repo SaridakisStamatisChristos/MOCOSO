@@ -1,6 +1,6 @@
 # Verified source registry
 
-Inspected 24 October 2026. Citations are intentionally limited to works actually used in the manuscript. No uninspected citation was added to create apparent coverage. The broader audit literature matrix remains preserved in ../g9_independent_audit/LITERATURE.md.
+Inspected 24 October 2026 in the audit and priority investigation. This revision incorporates that verified source set. Citations are limited to works actually used. The fuller matrix and search record are preserved in ../g9_priority/SOURCES.md and SEARCH_LOG.md; the earlier audit remains unchanged.
 
 | BibTeX key | Primary source and checked locus | Use and boundary |
 |---|---|---|
@@ -10,6 +10,11 @@ Inspected 24 October 2026. Citations are intentionally limited to works actually
 | jin2020 | https://arxiv.org/abs/2011.03819 ; 7 Nov 2020, authors and abstract | Related exact-resource low-space topic; preprint citation, no asserted black-box transfer |
 | erickson2019 | https://jeffe.cs.illinois.edu/teaching/algorithms/ and book/03-dynprog.pdf ; first edition June 2019, printed p.126 exercise (f) | Same base selected-value convexity definition |
 | mocoso2026 | https://github.com/SaridakisStamatisChristos/MOCOSO/tree/43353e2b9a659d736b627788ec0c46554a090c75/research/v03 ; immutable Git source and evidence checked locally | Primary research artifact; no inference of external peer review |
+| bjorklund2014 | https://arxiv.org/html/1508.03572v1 ; Theorem 1, Algorithm 1 and query analysis; conference DOI 10.1007/978-3-662-44777-2_13 | ESA 2014, LNCS 8737, 149–160; numbered statements inspected in 2015 full version. Arbitrary extraction, not our canonical guarantee; runtime transfer assumptions retained |
+| meeks2018 | https://arxiv.org/html/1509.05572v4 ; Sections 1 and 3 | Inclusion versus extension distinction; v4 4 January 2018, initial preprint 2015 |
+| creignou2017 | https://arxiv.org/pdf/1610.05493v2 ; Section 3.2, Proposition 5 and proof, printed p.8 | Lexicographic extension-query ancestry; preprint numbering explicitly identified |
+| wu2014 | https://www.vldb.org/pvldb/vol7/p721-wu.pdf ; Section 5, pp.728–729 | PVLDB 7(9), 721–732; temporal expansion. Exact-resource/negative-cost adaptation is our inference |
+| mocosopriority2026 | https://github.com/SaridakisStamatisChristos/MOCOSO/tree/b23ca44be7f5a0932c209b2b4f80a221830ed8b2/research/v03/g9_priority | Immutable source-specific report, thirty-query log, independent reduction script and results |
 
 The first attempted arXiv version-specific PDF URL failed; the canonical cs/0106045 PDF succeeded and identifies v2 on page one. Online publication and issue dates for Turner are deliberately distinguished. Jin et al. are cited using inspected preprint metadata rather than unneeded unverified proceedings pagination.
 
