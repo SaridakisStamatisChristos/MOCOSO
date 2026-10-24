@@ -140,3 +140,20 @@ The cost of pathological huge signed integers in Python is not constant per oper
 To reopen theory novelty: formulate a mathematically *irreducible* theorem that beats the explicit lifted sorted-edge reference in the same full-lex complexity model (for example **O(n+h³) time with O(h²) auxiliary wide-word memory for exact full-lex witnesses**, or provably faster than cubic deficit time), with proof and counterexample testing; then search the literature specifically for such refined witness/lower-bound methods. **Those targets are open research objectives, not already obtained results.** An alternative is an application-/methods-focused note clearly treating the mechanism as inherited.
 
 No full manuscript, paper release, merges, production rewrites, formal checker execution or global novelty guarantee authorized by this review.
+
+
+## Unrestricted-modulus corollary — even broader novelty collision
+
+The same historical edge-event method is not confined to high modulus. For arbitrary m>=2, use the sum of **selected original indices modulo m** as resource rather than the omitted-index sum. Let `L[j,r]` be best selected length ending at j with residue r, with singleton base `L[j,j mod m]=1`. Process all i<j in K13's ascending `a_j-a_i` / descending-j-on-tie event order and perform
+\[
+L[j,(r+j)\bmod m]\gets \max\{L[j,(r+j)\bmod m],1+L[i,r]\}.
+\]
+Final optimum is `max(0,max_j L[j,0])`. The preceding strict-event invariant proves correctness without tracking the last *pair* in the DP table: edge-difference event order already encodes the required previous-difference threshold. This is a standard **resource-coordinate lift of an existing DP**, not a claim that K13 published this modular extension.
+
+The event list occupies O(n²) wide words, and the table contains only n*m entries. Time is **O(n²m+n²log(n+1))**, auxiliary **O(nm+n²)** wide words for **exact optimum LENGTH** over the **entire arbitrary-modulus problem**. The original MOCOSO v0.2 pair-state residue DP uses O(n²m) time and O(n²m) auxiliary words (both in its documented computational model). Thus the lifted edge method recovers the same leading time order with fewer auxiliary words for length-only. It also strengthens the conclusion that the basic convexity+resource-DP *mechanism* cannot be advertised as intrinsically new.
+
+For the **full lexicographically least optimal tuple**, force inclusion/exclusion of each index and recompute the length oracle at most n times: **O(n³m+n³log(n+1)) time and O(nm+n²) auxiliary words**, excluding read-only input/final output. The first differing selected index resolves lex among equal-cardinality tuples, as proved for the deficit specialization. This is a standard time–space exchange, **not** the v0.2/G3 time guarantee for full lex.
+
+An independent prototype was compared against 84,465 direct selected-subset exhaustive signed instances n=2..7 across *all* m=2..U+2, with no length mismatches. The added repository tests separately check the full lex tuple for 21,042 direct-oracle cases n=2..6, plus the original 41,085 high-modulus full-lex corpus. These test counts are not to be presented as newly observed repository CI success until the exact associated CI run is inspected.
+
+**Originality implications:** this corollary is a useful *in-project* improvement in space-accounting and a publishable research question only if stronger independent priority/significance evidence is found. It is not yet an externally novel theorem; it instead demonstrates the reach of the classical K13 sorted-event/resource-state combination.
