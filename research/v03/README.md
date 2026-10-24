@@ -39,13 +39,15 @@ journal acceptance or submission.
 ## Integration verification
 
 The integration preserves the full research commit ancestry and all original
-G3–G9 implementations. Two workflow corrections address observed failures:
+G3–G9 implementations. Three workflow corrections address observed failures:
 
 - The G6 preservation check compares every file present in its frozen baseline,
   allowing later additions while still rejecting modification or deletion of
   historical files.
 - Each G5 replay archives to a run-and-attempt-specific branch, avoiding the
   observed non-fast-forward rejection and preserving the original evidence ref.
+- The G9 audit preservation check protects the frozen solvers, tests, and
+  research evidence while permitting root navigation and CI maintenance.
 
 Reproduce the solver tests with `python -m unittest discover -s tests -p 'test_*.py' -v`.
 See [audit reproduction](g9_independent_audit/REPRODUCE.md) and

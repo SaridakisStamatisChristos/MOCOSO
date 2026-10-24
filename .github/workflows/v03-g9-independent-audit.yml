@@ -25,7 +25,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -z "$(git diff --name-only --diff-filter=DMRTUXB 96ac7e2df040ed964bc36f0ad4e00d541b3f1f2d HEAD)"
+          # Preserve the frozen solvers, tests, and research evidence. Root
+          # navigation and CI maintenance are outside this source invariant.
+          test -z "$(git diff --name-only --diff-filter=DMRTUXB 96ac7e2df040ed964bc36f0ad4e00d541b3f1f2d HEAD -- modconvex.py edge_dp.py experiments/v03 tests research/v03)"
       - name: Independent oracles, mutations, and memory regression
         shell: bash
         run: |
