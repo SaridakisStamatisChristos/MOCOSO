@@ -171,7 +171,7 @@ def main():
                 assert rep["profile"]==hist["profile"]
                 assert len(rep["cases"])==len(hist["cases"])
                 assert rep["provenance"]["file_sha256"]==hist["provenance"]["file_sha256"]
-                assert rep["provenance"]["working_commit"]!=hist["provenance"]["working_commit"] or True
+                assert rep["provenance"]["working_commit"]=="a6abd7459f9150a1342e35408d1cc735470c35bc", ("not exact pinned G4 commit",rep["provenance"]["working_commit"])
                 assert rep["complete"] and len(rep["rows"])==len(rep["plan"])
                 assert rep["repetitions"]==2 and rep["blocks"]==1
                 bycid={c["case_id"]:c for c in rep["cases"]}
