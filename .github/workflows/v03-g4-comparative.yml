@@ -1,0 +1,162 @@
+name: MOCOSO G4 comparative evidence
+
+on:
+  pull_request:
+    paths:
+      - 'experiments/v03/benchmark_g4.py'
+      - 'experiments/v03/generic_rc_dag.py'
+      - 'tests/test_v03_g4.py'
+      - 'research/v03/prepaper/g4_*'
+      - '.github/workflows/v03-g4-comparative.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONHASHSEED: '0'
+  PYTHONPATH: '.'
+
+jobs:
+  generic-oracle-independent:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        py: ['3.11','3.13']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.py }}
+      - name: Frozen v0.2, T1, M1 and G3 sources are unchanged
+        shell: bash
+        run: |
+          git diff --exit-code 7595130fecb1a21dc8ca8823d9ee8d5d136af97a -- modconvex.py edge_dp.py experiments/v03/deficit.py experiments/v03/benchmark_expanded.py experiments/v03/workloads_expanded.py
+          git diff --exit-code 53b2276c7ed450ba8c27adc0e1e02c1493b4e592 -- experiments/v03/poly_deficit.py experiments/v03/benchmark_poly_deficit.py
+      - name: Direct selected-subset exhaustive and randomized oracle verification
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m unittest -v tests.test_v03_g4 2>&1 | tee g4_oracle.log
+      - name: Environment and source checksums
+        if: always()
+        shell: bash
+        run: |
+          python -VV > g4_env.txt
+          python -c "import platform; print(platform.platform())" >> g4_env.txt
+          git rev-parse HEAD >> g4_env.txt
+          python -c "import pathlib,hashlib; print(*[(str(p),hashlib.sha256(p.read_bytes()).hexdigest()) for p in map(pathlib.Path,['experiments/v03/generic_rc_dag.py','experiments/v03/benchmark_g4.py'])],sep='\n')" >> g4_env.txt
+      - name: Persist independent results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g4-oracle-${{ matrix.os }}-py${{ matrix.py }}
+          path: |
+            g4_oracle.log
+            g4_env.txt
+          retention-days: 90
+
+  paper-profile-146:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Record original M1 paper-profile plan before measuring
+        shell: bash
+        run: |
+          python experiments/v03/benchmark_expanded.py --profile paper --seed 20261023 --order-seed 713 --blocks 2 --repetitions 3 --timeout 45 --plan-only --output g4_paper_plan.json
+      - name: Execute all 146 registered cases, 2 blocks, 3 repetitions
+        shell: bash
+        run: |
+          set -o pipefail
+          python experiments/v03/benchmark_expanded.py --profile paper --seed 20261023 --order-seed 713 --blocks 2 --repetitions 3 --timeout 45 --output g4_paper_raw.json 2>&1 | tee g4_paper_run.log
+      - name: Independently regenerate descriptive summary from raw report
+        if: always()
+        shell: bash
+        run: |
+          if test -f g4_paper_raw.json; then
+            python experiments/v03/benchmark_expanded.py --summarize g4_paper_raw.json --output g4_paper_summary.json
+          fi
+      - name: Preserve environment
+        if: always()
+        shell: bash
+        run: |
+          python -VV > g4_paper_env.txt
+          python -c "import platform,os; print(platform.platform(),os.cpu_count())" >> g4_paper_env.txt
+          git rev-parse HEAD >> g4_paper_env.txt
+      - name: Preserve plan, every measured/skipped raw cell and summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g4-paper-146-${{ matrix.os }}-py313
+          path: |
+            g4_paper_plan.json
+            g4_paper_raw.json
+            g4_paper_summary.json
+            g4_paper_run.log
+            g4_paper_env.txt
+          retention-days: 90
+
+  targeted-four-way:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Preregister exact 40-case four-algorithm plan
+        shell: bash
+        run: |
+          python experiments/v03/benchmark_g4.py --profile ci --seed 20261024 --order-seed 713 --blocks 2 --repetitions 3 --timeout 45 --plan-only --output g4_targeted_plan.json
+      - name: Execute four-method parity plus fresh-process resource evidence
+        shell: bash
+        run: |
+          set -o pipefail
+          python experiments/v03/benchmark_g4.py --profile ci --seed 20261024 --order-seed 713 --blocks 2 --repetitions 3 --timeout 45 --output g4_targeted_raw.json 2>&1 | tee g4_targeted_run.log
+      - name: Recompute summary from raw report
+        if: always()
+        shell: bash
+        run: |
+          if test -f g4_targeted_raw.json; then
+            python experiments/v03/benchmark_g4.py --summarize g4_targeted_raw.json --output g4_targeted_summary.json
+          fi
+      - name: Preserve environment
+        if: always()
+        shell: bash
+        run: |
+          python -VV > g4_targeted_env.txt
+          python -c "import platform,os; print(platform.platform(),os.cpu_count())" >> g4_targeted_env.txt
+          git rev-parse HEAD >> g4_targeted_env.txt
+      - name: Upload complete plan/raw/summary including explicit failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g4-targeted-four-way-${{ matrix.os }}-py313
+          path: |
+            g4_targeted_plan.json
+            g4_targeted_raw.json
+            g4_targeted_summary.json
+            g4_targeted_run.log
+            g4_targeted_env.txt
+          retention-days: 90
