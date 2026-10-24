@@ -139,3 +139,82 @@ def solve_lex_by_recomputation(a, m):
         for i, j, k in zip(witness, witness[1:], witness[2:])
     )
     return witness
+
+
+
+def best_length_modular(a, m, *, must_select=(), must_omit=()):
+    """Unrestricted-modulus classical sorted-edge/residue lift.
+
+    Return exact optimum LENGTH for all m>=2 with global selected-index sum
+    divisible by m and all strict-convex triples. Required selected/omitted
+    indices are honored; -1 means impossible. Empty is a valid fallback when
+    must_select is empty.
+
+    O(n^2*m+n^2*log(n+1)) wide-word time, O(n*m+n^2) auxiliary words,
+    versus the pair-state implementation's O(n^2*m) DP cells.
+    It is a construction from known methods, NOT a priority claim.
+    """
+    if type(m) is not int or m < 2 or any(type(v) is not int for v in a):
+        raise ValueError("array and modulus must be signed integers, m>=2")
+    n = len(a)
+    include, exclude = frozenset(must_select), frozenset(must_omit)
+    if any(type(j) is not int or not (1 <= j <= n)
+           for j in include | exclude):
+        raise ValueError("forced indices must be integers in [1,n]")
+    if include & exclude:
+        return -1
+
+    prefix = [0] * (n + 1)
+    for i in range(1, n + 1):
+        prefix[i] = prefix[i-1] + (i in include)
+
+    dp = [[-1] * m for _ in range(n + 1)]
+    for i in range(1, n + 1):
+        if i not in exclude and prefix[i-1] == 0:
+            dp[i][i % m] = 1
+
+    events = sorted(
+        (a[j-1]-a[i-1], -j, i, j)
+        for i in range(1, n)
+        for j in range(i+1, n+1)
+    )
+    for _, _, i, j in events:
+        if i in exclude or j in exclude or prefix[j-1] != prefix[i]:
+            continue
+        for r in range(m):
+            old = dp[i][r]
+            if old > 0 and old + 1 > dp[j][(r+j) % m]:
+                dp[j][(r+j) % m] = old + 1
+
+    answer = -1
+    for j in range(1, n + 1):
+        if prefix[n] == prefix[j] and dp[j][0] > 0:
+            answer = max(answer, dp[j][0])
+    if answer < 0 and not include:
+        return 0
+    return answer
+
+
+def solve_lex_modular_by_recomputation(a, m):
+    """Global-lex exact unrestricted-modulus witness by DP self-reduction.
+
+    O(n^3*m+n^3*log(n+1)) time, O(n*m+n^2) auxiliary wide words,
+    excluding input and output tuple; not production and not novel claimed.
+    """
+    target = best_length_modular(a, m)
+    if target == 0:
+        return ()
+    chosen, omitted = set(), set()
+    for i in range(1, len(a)+1):
+        if best_length_modular(a, m, must_select=chosen | {i},
+                               must_omit=omitted) == target:
+            chosen.add(i)
+        else:
+            omitted.add(i)
+    result = tuple(sorted(chosen))
+    assert len(result) == target and sum(result) % m == 0
+    assert all(
+        a[x-1] + a[z-1] > 2*a[y-1]
+        for x,y,z in zip(result,result[1:],result[2:])
+    )
+    return result
