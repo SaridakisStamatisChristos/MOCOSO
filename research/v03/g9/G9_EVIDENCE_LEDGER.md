@@ -9,7 +9,7 @@ Linux CPython isolated workspace: candidate uses only scalar constrained DP and 
 - **1,500** seed 22102407 giant signed cases, n=2..100 and h<=16, independently compared against omission-partition oracle; PASS.
 - **4,000** additional seed 20261024 signed giant cases, n=2..110 and h<=17, independent omission-partition oracle; PASS.
 - Strict/equal-difference counterexamples, true lex tie, large superconvex n=10000,h=4 and broken mandatory-suffix cases; PASS. Instrumented query counts conformed to the derived safe envelope. Large exponentials were NOT constant-bit-cost benchmark inputs.
-- These counts were executed on *local prototype code*. The committed test suite explicitly recreates 21,321+145,632 selected-subset and 1,500 omission-partition cases, plus other checks; committed-source CI must be fetched independently before a CI verified label is awarded.
+- These counts were executed on *local prototype code*. The committed test suite explicitly recreates 21,321+145,632 selected-subset and 1,500+4,000 omission-partition cases, plus other checks; committed-source CI must be fetched independently before a CI verified label is awarded.
 
 ## Adversarial hypotheses
 
