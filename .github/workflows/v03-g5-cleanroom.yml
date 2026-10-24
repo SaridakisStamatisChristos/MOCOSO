@@ -1,0 +1,178 @@
+name: MOCOSO G5 independent clean-room reproduction
+on:
+  pull_request:
+    paths:
+      - 'research/v03/prepaper/g5_*'
+      - '.github/workflows/v03-g5-cleanroom.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: core.autocrlf
+  GIT_CONFIG_VALUE_0: 'false'
+  PYTHONHASHSEED: '0'
+
+jobs:
+  verify-original-artifact-bytes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Fetch exact G4 artifact ZIP bytes by immutable run artifact IDs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p originals
+          for pair in "12546253781 paper_ubuntu" "12546566643 paper_windows" "12546576206 targeted_ubuntu" "12546317881 targeted_windows"; do
+            set -- $pair
+            curl -fLsS --retry 4 --retry-delay 2 \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/SaridakisStamatisChristos/MOCOSO/actions/artifacts/$1/zip" \
+              -o "originals/$2.zip"
+          done
+      - name: Independent ZIP, source/plan, complete witness and selected-subset audit
+        run: |
+          python research/v03/prepaper/g5_independent_audit.py --archives originals --output g5_historical_audit.json > g5_historical_audit.log
+      - name: Upload originals and independent audit (always, including failures)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g5-original-zips-and-audit
+          path: |
+            originals/*.zip
+            g5_historical_audit.json
+            g5_historical_audit.log
+          retention-days: 90
+          if-no-files-found: warn
+
+  cleanroom-reproduction:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    env:
+      PYTHONPATH: '.'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: audit
+      - uses: actions/checkout@v4
+        with:
+          repository: SaridakisStamatisChristos/MOCOSO
+          ref: a6abd7459f9150a1342e35408d1cc735470c35bc
+          fetch-depth: 0
+          path: cleanroom
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Confirm exact frozen checkout and clean initial working tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd cleanroom
+          test "$(git rev-parse HEAD)" = "a6abd7459f9150a1342e35408d1cc735470c35bc"
+          test -z "$(git status --porcelain)"
+          git diff --exit-code 7595130fecb1a21dc8ca8823d9ee8d5d136af97a -- modconvex.py edge_dp.py experiments/v03/deficit.py experiments/v03/benchmark_expanded.py experiments/v03/workloads_expanded.py
+          git diff --exit-code 53b2276c7ed450ba8c27adc0e1e02c1493b4e592 -- experiments/v03/poly_deficit.py experiments/v03/benchmark_poly_deficit.py
+      - name: Recompute the exact 146 registered paper workloads from scratch
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$RUNNER_OS" in Linux) os=ubuntu;; Windows) os=windows;; *) exit 1;; esac
+          mkdir -p replay
+          cd cleanroom
+          python experiments/v03/benchmark_expanded.py --profile paper --seed 20261023 --order-seed 9917 --blocks 1 --repetitions 2 --timeout 45 --output "../replay/g5_paper_${os}.json"
+      - name: Recompute exact G4 targeted 40-case four-way comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$RUNNER_OS" in Linux) os=ubuntu;; Windows) os=windows;; *) exit 1;; esac
+          cd cleanroom
+          python experiments/v03/benchmark_g4.py --profile ci --seed 20261024 --order-seed 9917 --blocks 1 --repetitions 2 --timeout 45 --output "../replay/g5_targeted_${os}.json"
+      - name: Record source and environment
+        if: always()
+        shell: bash
+        run: |
+          python -VV > g5_runner_environment.txt
+          python -c "import platform,os;print(platform.platform(),os.cpu_count())" >> g5_runner_environment.txt
+          git -C cleanroom rev-parse HEAD >> g5_runner_environment.txt
+          git -C cleanroom status --porcelain >> g5_runner_environment.txt
+      - name: Upload every result including incomplete report and env
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g5-replay-${{ matrix.os }}
+          path: |
+            replay/*.json
+            g5_runner_environment.txt
+          retention-days: 90
+          if-no-files-found: warn
+
+  cross-validate-and-archive:
+    needs: [verify-original-artifact-bytes, cleanroom-reproduction]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: research/v03-g5-cleanroom-repro
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v4
+        with:
+          name: g5-original-zips-and-audit
+          path: collected
+      - uses: actions/download-artifact@v4
+        with:
+          name: g5-replay-ubuntu-latest
+          path: collected/replay
+      - uses: actions/download-artifact@v4
+        with:
+          name: g5-replay-windows-latest
+          path: collected/replay
+      - name: Independently recompute archive and fresh replay equivalence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python research/v03/prepaper/g5_independent_audit.py --archives collected/originals --replica collected/replay --output g5_independent_final.json | tee g5_cross_validation.log
+      - name: Preserve replay and original ZIPs in a separate, unmerged Git branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c research/v03-g5-evidence-archive
+          mkdir -p research/v03/prepaper/archive/G4 research/v03/prepaper/archive/G5
+          cp collected/originals/*.zip research/v03/prepaper/archive/G4/
+          cp collected/replay/*.json research/v03/prepaper/archive/G5/
+          cp g5_independent_final.json research/v03/prepaper/archive/G5/manifest_verified.json
+          git add research/v03/prepaper/archive
+          git commit -m "G5: archive verified G4 original ZIPs and fresh cleanroom reproductions"
+          git push origin HEAD:refs/heads/research/v03-g5-evidence-archive
+      - name: Preserve the exact final verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g5-final-independent-cross-validation
+          path: |
+            g5_independent_final.json
+            g5_cross_validation.log
+          retention-days: 90
+          if-no-files-found: warn
