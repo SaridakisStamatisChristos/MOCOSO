@@ -37,7 +37,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m unittest -v tests.test_v03_g7_compact_lex 2>&1 | tee g7_verification.log
+          python -m unittest -v tests.test_v03_g7_compact_lex tests.test_v03_g7_independent_partition 2>&1 | tee g7_verification.log
       - name: Fingerprint
         if: always()
         shell: bash

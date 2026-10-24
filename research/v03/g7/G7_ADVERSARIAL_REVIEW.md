@@ -26,8 +26,17 @@ Observed outcomes on the local standalone prototype: **all passed**. These count
 
 ## Execution vs CI
 
-A native Linux/Windows × Python 3.11/3.13 GitHub Actions test matrix is committed at \`.github/workflows/v03-g7-compact-lex.yml\`. The workflow enforces source-preservation diff, runs the committed independent direct-subset oracle plus G3 comparator, records commit/runtime/file hash and uploads logs. **Do not call it green unless final-head runs are fetched and found successful.** No formal verifier/Lean run was done. No performance benchmarking or Python RSS guarantee is claimed; the asymptotic bound is established by the proof, not empirical timing.
+A native Linux/Windows × Python 3.11/3.13 GitHub Actions test matrix is committed at \`.github/workflows/v03-g7-compact-lex.yml\`. The workflow enforces source-preservation diff, runs the committed independent direct-subset oracle plus G3 comparator, records commit/runtime/file hash and uploads logs. **At original G7 head `e8ff4846968699488a3cba6f995dbbb19a038be3`, GitHub Actions run [40083406635](https://github.com/SaridakisStamatisChristos/MOCOSO/actions/runs/40083406635) completed successfully; its 4/4 Linux/Windows x Python 3.11/3.13 jobs succeeded. This verifies that frozen G7 head only; subsequent G8-head tests need independent run results.** No formal verifier/Lean run was done. No performance benchmarking or Python RSS guarantee is claimed; the asymptotic bound is established by the proof, not empirical timing.
 
 ## Outstanding independent proof obligations
 
 Primary target O(n+h^3) time/O(h²) space with globally least entire witness: **OPEN**. Specifically the safe dynamic history/rank reconstruction without cubic persistent state or an extra p recomputation factor is unproved. Generic bounded-frontier traceback has not been reduced parameter-preservingly to this sorted-event DP.
+
+
+## G8 handoff: independent G7 audit corrections (2026-10-24)
+
+The additional omission-partition oracle reported in the PR #13 SOTA Auditor review is now reproducibly encoded in \`tests/test_v03_g7_independent_partition.py\`, **independent of both the G7 edge sweep and G3 pair-state DP**. The test enumerates strictly increasing omitted index partitions with exact sum h, forms each full complement and independently checks strict triples and entire-tuple lex order. It tests the actual \`experiments/v03/g7_compact_lex.py\` function, not a local transcription.
+
+Reproduction: \`python -m unittest -v tests.test_v03_g7_independent_partition\`. Defined deterministic corpus: exhaustive A in {-1,0,1}^n for n=2..7 over h<n and high-modulus, 21,321 cases; plus 1,500 seeded cases (seed 22102407, 2<=n<=100, h<=16, giant signed elements) and the true lex tie fixture. This description is a **test specification**, not an assertion that a newly committed head's CI is green. The separately executed Linux CPython 3.13.5 local prototype matched all 21,321 + 1,500 cases. Retain explicit distinction between independently audited prototype and independently CI-tested repository code.
+
+All G3-G7 antecedents remain immutable. Proof details, bit-cost qualifications, and G8's subsequent verdict are separate from the G7-P originally established claim.
