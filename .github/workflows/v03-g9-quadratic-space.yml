@@ -1,0 +1,55 @@
+name: G9 quadratic-space full lex research
+on:
+  pull_request:
+    paths:
+      - "experiments/v03/g9_quadratic_lex.py"
+      - "tests/test_v03_g9_quadratic_lex.py"
+      - "research/v03/g9/**"
+      - ".github/workflows/v03-g9-quadratic-space.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PYTHONHASHSEED: "0"
+  PYTHONPATH: "."
+jobs:
+  exact-quadratic-witness:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.11", "3.13"]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Freeze G3-G8 and production code
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code af67856d17d87399b13c61006363a8448fd360bd -- modconvex.py edge_dp.py experiments/v03/poly_deficit.py experiments/v03/edge_budget_lift.py experiments/v03/g7_compact_lex.py experiments/v03/g8_persistent_intervals.py
+      - name: Independent full-selected-subset and partition-oracle verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_v03_g9_quadratic_lex 2>&1 | tee g9_verification.log
+      - name: Fingerprint source and environment
+        if: always()
+        shell: bash
+        run: |
+          python -VV > g9_environment.txt
+          git rev-parse HEAD >> g9_environment.txt
+          python -c "import hashlib,pathlib; paths=('experiments/v03/g9_quadratic_lex.py','tests/test_v03_g9_quadratic_lex.py'); [print(p,hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()) for p in paths]" >> g9_environment.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g9-quadratic-${{ matrix.os }}-py${{ matrix.python }}
+          path: |
+            g9_verification.log
+            g9_environment.txt
+          retention-days: 90
