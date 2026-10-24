@@ -60,6 +60,17 @@ class G9QuadraticSpaceIndependent(unittest.TestCase):
             self.assertEqual(solve_g9(a,U-h),partition_oracle(a,U-h),
                              (k,n,h))
 
+    def test_additional_4000_signed_partition_seed(self):
+        rng=Random(20261024)
+        alphabet=(-10**160,-10**90,-5,0,1,2,10**90,10**160)
+        for k in range(4000):
+            n=rng.randint(2,110)
+            U=n*(n+1)//2
+            h=rng.randrange(min(n,U-U//2,18))
+            a=tuple(rng.choice(alphabet) for _ in range(n))
+            self.assertEqual(solve_g9(a,U-h),partition_oracle(a,U-h),
+                             (k,n,h))
+
     def test_lex_tie_equal_differences_fixed_suffix_and_zero(self):
         self.assertEqual(solve_g9((-3,-3,-3,-3,-2,0),16),(1,4,5,6))
         self.assertEqual(solve_g9((0,1,2),6),())
