@@ -1,0 +1,73 @@
+name: MOCOSO G6 independent evidence falsification
+on:
+  pull_request:
+    paths:
+      - 'research/v03/prepaper/g6_*'
+      - '.github/workflows/v03-g6-research-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONHASHSEED: '0'
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: core.autocrlf
+  GIT_CONFIG_VALUE_0: 'false'
+
+jobs:
+  g6-independent-raw-crosscheck:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        py: ['3.11','3.13']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - name: Load independent G6 verifier source
+        uses: actions/checkout@v4
+        with:
+          path: g6-audit
+      - name: Fetch independently preserved G5 evidence ref
+        uses: actions/checkout@v4
+        with:
+          repository: SaridakisStamatisChristos/MOCOSO
+          ref: research/v03-g5-evidence-archive
+          path: archived
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.py }}
+      - name: Verify audit branch retains all preexisting production and research source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd g6-audit
+          git diff --exit-code bcfd6ea96cfcbb690d972007791a1b572a1b0001 -- modconvex.py edge_dp.py experiments/v03 tests research/v03/t1_deficit_proof.md
+      - name: Recompute all finite claims without importing MOCOSO solver or G5 auditor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python g6-audit/research/v03/prepaper/g6_verify_independent.py \
+            --archive-dir archived/research/v03/prepaper/archive \
+            --output g6_independent_raw_audit.json | tee g6_audit_stdout.log
+      - name: Record exact G6 / evidence refs and runtime
+        if: always()
+        shell: bash
+        run: |
+          git -C g6-audit rev-parse HEAD > g6_environment.txt
+          git -C archived rev-parse HEAD >> g6_environment.txt
+          python -VV >> g6_environment.txt
+          python -c "import platform;print(platform.platform())" >> g6_environment.txt
+          python -c "import pathlib,hashlib; p=pathlib.Path('g6-audit/research/v03/prepaper/g6_verify_independent.py');print(hashlib.sha256(p.read_bytes()).hexdigest())" >> g6_environment.txt
+      - name: Preserve all observations and refs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g6-audit-${{ matrix.os }}-py${{ matrix.py }}
+          path: |
+            g6_independent_raw_audit.json
+            g6_audit_stdout.log
+            g6_environment.txt
+          retention-days: 90
+          if-no-files-found: warn
