@@ -61,7 +61,7 @@ class G7CompactLex(unittest.TestCase):
                 self.assertEqual(solve_compact_lex(a,m),())
         # Distinct equal-cardinality omission sets summing 5:
         # omit (2,3) is lex-better selected tuple than omit (1,4).
-        a=[3**i for i in range(6)]
+        a=(-3,-3,-3,-3,-2,0)
         self.assertEqual(solve_compact_lex(a,16),(1,4,5,6))
 
     def test_threshold_tie_and_crossing(self):
