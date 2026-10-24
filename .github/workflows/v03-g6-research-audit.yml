@@ -29,6 +29,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: g6-audit
+          fetch-depth: 0
       - name: Fetch independently preserved G5 evidence ref
         uses: actions/checkout@v4
         with:
