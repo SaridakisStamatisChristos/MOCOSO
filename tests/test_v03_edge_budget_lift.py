@@ -12,6 +12,7 @@ import unittest
 from experiments.v03.edge_budget_lift import (best_length, solve_lex_by_recomputation,
     best_length_modular, solve_lex_modular_by_recomputation)
 from experiments.v03.poly_deficit import solve_poly_deficit
+from edge_dp import solve_edge
 
 
 def selected_subset_oracle(a,m):
@@ -127,6 +128,10 @@ class PriorEdgeResourceLift(unittest.TestCase):
                     self.assertEqual(
                         solve_lex_modular_by_recomputation(a,m),
                         ref,(n,a,m))
+                    # Historical edge_dp.py already solves this exact task;
+                    # its per-vertex/residue DP with bitmask lex witnesses
+                    # is an internal antecedent, NOT our novel algorithm.
+                    self.assertEqual(solve_edge(a,m),ref,(n,a,m))
                     count+=1
         self.assertEqual(count,21042)
 
