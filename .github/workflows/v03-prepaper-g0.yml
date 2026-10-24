@@ -30,7 +30,14 @@ jobs:
       - name: Freeze code files against research head
         shell: bash
         run: |
-          git diff --exit-code 7595130fecb1a21dc8ca8823d9ee8d5d136af97a -- modconvex.py edge_dp.py experiments/v03 tests research/v03/t1_deficit_proof.md
+          # Preserve every preexisting experiment/test file exactly; allow
+          # explicitly added G3/G4 research-only files on stacked branches.
+          # The earlier blanket directory diff falsely rejected additions.
+          base=7595130fecb1a21dc8ca8823d9ee8d5d136af97a
+          git diff --exit-code "$base" -- modconvex.py edge_dp.py research/v03/t1_deficit_proof.md
+          while IFS= read -r path; do
+            git diff --exit-code "$base" -- "$path"
+          done < <(git ls-tree -r --name-only "$base" -- experiments/v03 tests)
       - name: Record environment and source SHA-256
         shell: bash
         run: |
