@@ -163,9 +163,7 @@ def main():
         assert sha(b)==manifest["sha256"],("manifest mismatch",name)
         report=json.loads(b)
         assert report["order_seed"]!=original[name]["order_seed"]
-        a=inspect_report(report,expected=(len(original[name]["cases"]),None,None,None) if False else None,
-                         old=original[name])
-        assert len(a["cases"] if isinstance(a["cases"],list) else [])==0 if False else True
+        a=inspect_report(report,expected=None,old=original[name])
         assert (a["cases"],a["planned"])==(
             len(original[name]["cases"]),len(original[name]["plan"])//2)
         assert a["full_optima"]==records[name]["full_optima"],("original vs replay witness",name)
