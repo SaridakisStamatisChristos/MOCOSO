@@ -1,0 +1,365 @@
+{
+  "pin": "96ac7e2df040ed964bc36f0ad4e00d541b3f1f2d",
+  "source_git_blob": "bcdbabc1cde45d357baa64fd78a693889258855b",
+  "seed": 2026102415,
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+  "counts": {
+    "counter_bound_checks": 4662,
+    "exhaustive_selected_subset": 73809,
+    "pair_full_witness": 1800,
+    "random_selected_subset": 6000,
+    "forced_scalar_queries": 13767,
+    "forced_pair_queries": 1565,
+    "nontrivial_optimal_ties": 2,
+    "event_set_and_harmonic_checks": 201,
+    "planted_partition_witnesses": 450,
+    "constructed_deep_lex_ties": 18
+  },
+  "findings": {
+    "first_nontrivial_tie": {
+      "a": [
+        7,
+        12,
+        -15,
+        -5,
+        -15,
+        18
+      ],
+      "m": 16,
+      "witnesses": [
+        [
+          1,
+          4,
+          5,
+          6
+        ],
+        [
+          2,
+          3,
+          5,
+          6
+        ]
+      ]
+    },
+    "mutation_counterexamples": {
+      "forbidden_endpoints_removed": {
+        "a": [
+          4,
+          -5,
+          1,
+          10,
+          19
+        ],
+        "m": 11,
+        "q": [
+          2,
+          3
+        ],
+        "x": 1,
+        "expected": 0,
+        "mutant": 4
+      },
+      "required_gap_check_removed": {
+        "a": [
+          4,
+          -5,
+          1,
+          10,
+          19
+        ],
+        "m": 11,
+        "q": [],
+        "x": 5,
+        "expected": 0,
+        "mutant": 4
+      },
+      "required_start_check_removed": {
+        "a": [
+          999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999,
+          2,
+          1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003,
+          -2,
+          -1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003,
+          -1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002
+        ],
+        "m": 18,
+        "q": [
+          1
+        ],
+        "x": 3,
+        "expected": 0,
+        "mutant": 4
+      },
+      "one_compulsory_anchor_only": {
+        "a": [
+          999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999,
+          2,
+          1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003,
+          -2,
+          -1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003,
+          -1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002
+        ],
+        "m": 18,
+        "q": [],
+        "x": 1,
+        "expected": 4,
+        "mutant": 5
+      }
+    },
+    "equal_difference_mutant": {
+      "a": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "m": 8,
+      "correct": [],
+      "mutant": [
+        1,
+        3,
+        4
+      ]
+    },
+    "noncontiguous_first_omission_search": {
+      "trials": 10000,
+      "found": null
+    },
+    "nonmonotone_equality_example": {
+      "a": [
+        1,
+        3,
+        9,
+        27,
+        81,
+        243,
+        729
+      ],
+      "m": 22,
+      "omissions": [
+        [
+          6
+        ]
+      ],
+      "equality": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false
+      ],
+      "threshold": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        false
+      ]
+    }
+  },
+  "stages": [
+    {
+      "name": "exhaustive selected subsets complete",
+      "elapsed_seconds": 1.0573000189999675
+    },
+    {
+      "name": "random, pair-state and constrained-oracle checks complete",
+      "elapsed_seconds": 2.3039104089999682
+    },
+    {
+      "name": "planted and maximal-omission families complete",
+      "elapsed_seconds": 3.458588340999995
+    },
+    {
+      "name": "mutants and fixed-deficit memory regression complete",
+      "elapsed_seconds": 18.57509624599993
+    }
+  ],
+  "stress_counters": [
+    {
+      "n": 4,
+      "h": 1,
+      "queries": 2,
+      "events": 2,
+      "relaxations": 8,
+      "omissions": 1
+    },
+    {
+      "n": 6,
+      "h": 3,
+      "queries": 5,
+      "events": 6,
+      "relaxations": 83,
+      "omissions": 2
+    },
+    {
+      "n": 13,
+      "h": 10,
+      "queries": 16,
+      "events": 24,
+      "relaxations": 2211,
+      "omissions": 4
+    },
+    {
+      "n": 39,
+      "h": 36,
+      "queries": 46,
+      "events": 111,
+      "relaxations": 84047,
+      "omissions": 8
+    },
+    {
+      "n": 81,
+      "h": 78,
+      "queries": 85,
+      "events": 273,
+      "relaxations": 777899,
+      "omissions": 12
+    },
+    {
+      "n": 139,
+      "h": 136,
+      "queries": 122,
+      "events": 516,
+      "relaxations": 3599916,
+      "omissions": 16
+    }
+  ],
+  "constructed_tie_families": [
+    {
+      "n": 10,
+      "h": 8,
+      "shared_omission_prefix": [],
+      "canonical_omissions": [
+        3,
+        5
+      ]
+    },
+    {
+      "n": 13,
+      "h": 11,
+      "shared_omission_prefix": [
+        1
+      ],
+      "canonical_omissions": [
+        1,
+        4,
+        6
+      ]
+    },
+    {
+      "n": 17,
+      "h": 15,
+      "shared_omission_prefix": [
+        1,
+        2
+      ],
+      "canonical_omissions": [
+        1,
+        2,
+        5,
+        7
+      ]
+    },
+    {
+      "n": 22,
+      "h": 20,
+      "shared_omission_prefix": [
+        1,
+        2,
+        3
+      ],
+      "canonical_omissions": [
+        1,
+        2,
+        3,
+        6,
+        8
+      ]
+    },
+    {
+      "n": 28,
+      "h": 26,
+      "shared_omission_prefix": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "canonical_omissions": [
+        1,
+        2,
+        3,
+        4,
+        7,
+        9
+      ]
+    },
+    {
+      "n": 35,
+      "h": 33,
+      "shared_omission_prefix": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "canonical_omissions": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        8,
+        10
+      ]
+    }
+  ],
+  "memory_validation": [
+    {
+      "n": 1000,
+      "h": 0,
+      "original_extra_bytes": 17160,
+      "corrected_extra_bytes": 1022
+    },
+    {
+      "n": 10000,
+      "h": 0,
+      "original_extra_bytes": 160992,
+      "corrected_extra_bytes": 832
+    },
+    {
+      "n": 100000,
+      "h": 0,
+      "original_extra_bytes": 1601000,
+      "corrected_extra_bytes": 840
+    }
+  ],
+  "omission_histogram": {
+    "0": 455,
+    "1": 1748,
+    "infeasible": 75621,
+    "2": 1530,
+    "3": 763,
+    "4": 101,
+    "5": 50,
+    "6": 8,
+    "7": 4,
+    "8": 1,
+    "12": 1,
+    "16": 1
+  },
+  "elapsed_seconds": 18.575161159000004,
+  "status": "PASS: exactness checks; pinned auxiliary-space claim REFUTED",
+  "files_sha256": {
+    "g9_quadratic_lex.py": "6d70b182aa7702246c98b85351c500883ede327292194ea7a5f5c49e925e54ba",
+    "audit.py": "3a42e800da20854e8a4f306ecccc27a73e446cc3b7800592111c07cdb7856870",
+    "solver_corrected.py": "a01ec1b21cf49f32386d5b4e4aa47aa99d327704ac411291332fc1230b461015"
+  }
+}

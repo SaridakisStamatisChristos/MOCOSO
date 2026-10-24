@@ -1,0 +1,56 @@
+name: G7 compact omission lex research
+on:
+  pull_request:
+    paths:
+      - "experiments/v03/g7_compact_lex.py"
+      - "tests/test_v03_g7_compact_lex.py"
+      - "research/v03/g7/**"
+      - ".github/workflows/v03-g7-compact-lex.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PYTHONHASHSEED: "0"
+  PYTHONPATH: "."
+jobs:
+  exact-full-lex:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.11", "3.13"]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Preserve production and frozen antecedents
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code 4016049054de743a12307aad70822e0423e3a3f7 -- modconvex.py edge_dp.py experiments/v03/poly_deficit.py experiments/v03/edge_budget_lift.py
+      - name: Independent full-tuple oracle and frozen G3
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_v03_g7_compact_lex tests.test_v03_g7_independent_partition 2>&1 | tee g7_verification.log
+      - name: Fingerprint
+        if: always()
+        shell: bash
+        run: |
+          python -VV > g7_environment.txt
+          git rev-parse HEAD >> g7_environment.txt
+          python -c "import hashlib,pathlib; p=pathlib.Path('experiments/v03/g7_compact_lex.py'); print(p, hashlib.sha256(p.read_bytes()).hexdigest())" >> g7_environment.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g7-compact-${{ matrix.os }}-py${{ matrix.python }}
+          path: |
+            g7_verification.log
+            g7_environment.txt
+          if-no-files-found: warn
+          retention-days: 90

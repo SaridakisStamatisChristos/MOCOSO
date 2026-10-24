@@ -1,0 +1,95 @@
+name: MOCOSO G0 evidence reproduction
+
+on:
+  pull_request:
+    paths:
+      - 'research/v03/prepaper/**'
+      - '.github/workflows/v03-prepaper-g0.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONHASHSEED: '0'
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: core.autocrlf
+  GIT_CONFIG_VALUE_0: 'false'
+
+jobs:
+  g0-unit-and-legacy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Freeze code files against research head
+        shell: bash
+        run: |
+          # Preserve every preexisting experiment/test file exactly; allow
+          # explicitly added G3/G4 research-only files on stacked branches.
+          # The earlier blanket directory diff falsely rejected additions.
+          base=7595130fecb1a21dc8ca8823d9ee8d5d136af97a
+          git diff --exit-code "$base" -- modconvex.py edge_dp.py research/v03/t1_deficit_proof.md
+          while IFS= read -r path; do
+            git diff --exit-code "$base" -- "$path"
+          done < <(git ls-tree -r --name-only "$base" -- experiments/v03 tests)
+      - name: Record environment and source SHA-256
+        shell: bash
+        run: |
+          git rev-parse HEAD > g0_environment.txt
+          python -VV >> g0_environment.txt
+          python -c "import platform; print(platform.platform(),platform.processor())" >> g0_environment.txt
+          sha256sum modconvex.py edge_dp.py experiments/v03/deficit.py experiments/v03/baselines.py experiments/v03/benchmark.py experiments/v03/benchmark_expanded.py >> g0_environment.txt
+      - name: Run complete finite test suite
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Run historical exactness and edge suites
+        run: |
+          python research_tests.py
+          python edge_trials.py
+          python extra_trials.py
+      - name: Preserve environment report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g0-environment-unit
+          path: g0_environment.txt
+          retention-days: 90
+          if-no-files-found: warn
+
+  g0-benchmark-reproduction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Re-run original 13-case benchmark without mutating historical report
+        run: python experiments/v03/benchmark.py --output g0_original13_raw.json --repetitions 3 --seed 20261023
+      - name: Reproduce frozen M1 CI execution plan
+        run: python experiments/v03/benchmark_expanded.py --profile ci --blocks 2 --repetitions 3 --plan-only --output g0_m1_plan.json
+      - name: Re-run M1 104-case benchmark with all skips and failures retained
+        run: python experiments/v03/benchmark_expanded.py --profile ci --blocks 2 --repetitions 3 --output g0_m1_raw.json
+      - name: Regenerate summary from new raw JSON
+        if: always()
+        run: |
+          if test -s g0_m1_raw.json; then python experiments/v03/benchmark_expanded.py --summarize g0_m1_raw.json --output g0_m1_summary.json; fi
+      - name: Preserve new raw outputs, plans and summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g0-reproduction-benchmark
+          path: |
+            g0_original13_raw.json
+            g0_m1_plan.json
+            g0_m1_raw.json
+            g0_m1_summary.json
+          retention-days: 90
+          if-no-files-found: warn

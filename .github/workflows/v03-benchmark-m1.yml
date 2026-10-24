@@ -1,0 +1,63 @@
+name: MOCOSO v0.3 benchmark milestone M1
+
+on:
+  pull_request:
+    paths:
+      - 'experiments/v03/**'
+      - 'tests/test_v03_benchmark_m1.py'
+      - 'research/v03/benchmark_m1*'
+      - '.github/workflows/v03-benchmark-m1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Exact source-byte provenance must agree on both operating systems.
+env:
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: core.autocrlf
+  GIT_CONFIG_VALUE_0: 'false'
+  PYTHONHASHSEED: '0'
+
+jobs:
+  expanded-evidence:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify solver and benchmark contracts
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Record runner hardware
+        shell: bash
+        run: |
+          python -c "import os, platform; print(platform.platform()); print(platform.processor()); print(os.cpu_count())" > benchmark_m1_hardware.txt
+          if command -v lscpu > /dev/null; then lscpu >> benchmark_m1_hardware.txt; fi
+          if command -v free > /dev/null; then free -h >> benchmark_m1_hardware.txt; fi
+      - name: Freeze workload and execution plan
+        run: python experiments/v03/benchmark_expanded.py --profile ci --blocks 2 --repetitions 3 --plan-only --output benchmark_m1_plan.json
+      - name: Execute expanded paired comparisons
+        run: python experiments/v03/benchmark_expanded.py --profile ci --blocks 2 --repetitions 3 --output benchmark_m1_raw.json
+      - name: Summarize within-runner pairs and losses
+        if: always()
+        run: python experiments/v03/benchmark_expanded.py --summarize benchmark_m1_raw.json --output benchmark_m1_summary.json
+      - name: Preserve plans and raw evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v03-benchmark-m1-${{ matrix.os }}
+          retention-days: 30
+          path: |
+            benchmark_m1_plan.json
+            benchmark_m1_raw.json
+            benchmark_m1_summary.json
+            benchmark_m1_hardware.txt
+          if-no-files-found: warn

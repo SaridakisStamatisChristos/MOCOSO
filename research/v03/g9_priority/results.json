@@ -1,0 +1,70 @@
+{
+  "status": "PASS",
+  "seed": 20261024,
+  "counts": {
+    "exhaustive_uniform_families": 2228,
+    "random_uniform_families": 3000,
+    "mocoso_instances": 7612,
+    "constrained_scores": 30448,
+    "feasible_instances": 1397,
+    "tied_optimum_instances": 29,
+    "canonical_queries": 2664
+  },
+  "same_weight_bkk_counterexample": {
+    "universe": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "family": [
+      [
+        1,
+        4
+      ],
+      [
+        2,
+        3
+      ]
+    ],
+    "partition_order": [
+      2,
+      3,
+      1,
+      4,
+      5
+    ],
+    "returned": [
+      1,
+      4
+    ],
+    "lexicographic_maximum": [
+      2,
+      3
+    ]
+  },
+  "contiguous_fifo_counterexample": {
+    "n": 4,
+    "family": [
+      [
+        1,
+        2
+      ],
+      [
+        1,
+        3
+      ]
+    ],
+    "returned": [
+      1,
+      2
+    ],
+    "canonical": [
+      1,
+      3
+    ]
+  },
+  "script_sha256": "08fd3cc213a284d2d74ffe13cac750247710de31e3c56f1fd1f181d8ac6073d4",
+  "limitation": "Finite checks support the reduction; they prove neither priority nor asymptotics."
+}
