@@ -142,11 +142,12 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: g5-replay-ubuntu-latest
-          path: collected/replay
+          # The artifact itself already contains a replay/ prefix.
+          path: collected
       - uses: actions/download-artifact@v4
         with:
           name: g5-replay-windows-latest
-          path: collected/replay
+          path: collected
       - name: Independently recompute archive and fresh replay equivalence
         shell: bash
         run: |
