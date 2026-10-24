@@ -35,6 +35,20 @@ class G7CompactLex(unittest.TestCase):
                     count+=1
         self.assertEqual(count,21321)
 
+    def test_exhaustive_signed_four_values_full_lex(self):
+        count = 0
+        for n in range(2,8):
+            U=n*(n+1)//2
+            for a in product((-2,-1,0,1),repeat=n):
+                for m in range(U//2+1,U+1):
+                    if U-m>=n:
+                        continue
+                    self.assertEqual(solve_compact_lex(a,m),
+                                     direct_selected_subset_oracle(a,m),
+                                     (n,a,m))
+                    count+=1
+        self.assertEqual(count,145632)
+
     def test_big_signed_full_lex_against_both_oracles(self):
         rng=Random(20261024)
         for _ in range(1000):
