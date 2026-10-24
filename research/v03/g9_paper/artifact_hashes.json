@@ -1,7 +1,16 @@
 {
-  "manuscript.md": "b8cc3079aa1c03024509ac856e55ddc755f45162385dbfc912383568c9181955",
-  "references.bib": "fc952b6b6714434fb2fa5f2fcdd9c0fd966d3ef929d2e7d83c7338afef3f3153",
-  "exports/manuscript.pdf": "1d29a2ce89011132369a9fe555f532a3c6a0b2554b29dc27f9429924e00dd696",
-  "exports/manuscript.docx": "7db03b72c26eada16464e3202ab13f3ac36a1e3aa04bc90f69bf4a27c4174b1e",
-  "exports/manuscript.tex": "7dee0a3ac1f800db1d83cd8f7025a77c65652b95d07f8b375854f5b4c9873621"
+  "BUILD_QA.md": "b07e37b179b55730290943f0ce0a4cba29db2665e337a2889390de5d2de5374d",
+  "CLAIM_EVIDENCE.md": "8ef799bf30b41fd94c5ba4a79e0828894d026b81d04f81339dbd4512bc713d51",
+  "PREFLIGHT.md": "0a3ba02c55c0cc93737873fa211d3fbc2f46f9390c954587c42d2a2728a5740e",
+  "README.md": "48e9657c1efcfe26c9f3f1e74e5e8872345d92879e370ab54a5190988d34ec6f",
+  "REVIEW.md": "ac5e503b25e7fa4bfc8693f6a8b803df5f7b33453d375477b417f25172c823a5",
+  "REVISION.md": "0a0caf4f0892b82e95dad2ad56ecd4a29759f9f8bf77626551e0778fd1d23324",
+  "SOURCE_REGISTRY.md": "9f105b5c7b7706c6fd515748f78a8bc5308031ff53e5bbe5ea7a15c12c7472ba",
+  "build.py": "cce0a2ae7e4b915fce0528deb5b0bdaab8c2624584aaf3cf5bd7886625d5f541",
+  "evidence_manifest.json": "e0a9ec562a6962be40877f5a04d3e7604a9c37d8f6cf663542345a989d6ba2ee",
+  "exports/manuscript.docx": "fd145a5da876589bb78bffd47a8b1dcd3329ae025df9aca7c1aa49d6434fa07c",
+  "exports/manuscript.pdf": "30dac59454831b127bd0edc632c5ebe4caa7cbb1f2d15cee6c93f680e9fd3823",
+  "exports/manuscript.tex": "c9dcdc82fe212c067f8484663dab883b4b992963dfdc0873e4fc8db86e908e21",
+  "manuscript.md": "8aaa57f2dbdea0c5e166d741a5158319c9351057399d2e5aa057946b8d27d28a",
+  "references.bib": "5f5e0b2f636b007636953a1894526f943fa81a966efc325c4313018f9fca90a3"
 }
