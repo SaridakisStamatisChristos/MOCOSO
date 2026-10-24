@@ -1,0 +1,82 @@
+name: MOCOSO G3 polynomial-deficit research
+
+on:
+  pull_request:
+    paths:
+      - 'experiments/v03/poly_deficit.py'
+      - 'experiments/v03/benchmark_poly_deficit.py'
+      - 'tests/test_v03_poly_deficit.py'
+      - 'research/v03/prepaper/g3_*'
+      - '.github/workflows/v03-g3-polynomial-deficit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: .
+  PYTHONHASHSEED: '0'
+
+jobs:
+  independent-g3-exactness:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.11', '3.13']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Original v0.2 and original T1 sources must not change
+        shell: bash
+        run: |
+          git diff --exit-code 7595130fecb1a21dc8ca8823d9ee8d5d136af97a -- modconvex.py edge_dp.py experiments/v03/deficit.py research/v03/t1_deficit_proof.md
+      - name: Independent full-subset oracle and parameterized certificates
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m unittest -v tests.test_v03_poly_deficit 2>&1 | tee g3_exactness.log
+      - name: Capture environment
+        if: always()
+        shell: bash
+        run: |
+          python -VV > g3_env.txt
+          python -c "import platform; print(platform.platform())" >> g3_env.txt
+          git rev-parse HEAD >> g3_env.txt
+          python -c "import hashlib,pathlib; p=pathlib.Path('experiments/v03/poly_deficit.py'); print(hashlib.sha256(p.read_bytes()).hexdigest())" >> g3_env.txt
+      - name: Preserve raw tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g3-test-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: |
+            g3_exactness.log
+            g3_env.txt
+          retention-days: 90
+
+  head-to-head-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Preregistered exact-witness parity and timing observations
+        shell: bash
+        run: |
+          set -o pipefail
+          python experiments/v03/benchmark_poly_deficit.py --profile ci --repetitions 2 | tee g3_head_to_head.jsonl
+      - name: Preserve raw timings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g3-head-to-head-ubuntu-py311
+          path: g3_head_to_head.jsonl
+          retention-days: 90
