@@ -9,7 +9,8 @@ from itertools import product
 import random
 import unittest
 
-from experiments.v03.edge_budget_lift import best_length, solve_lex_by_recomputation
+from experiments.v03.edge_budget_lift import (best_length, solve_lex_by_recomputation,
+    best_length_modular, solve_lex_modular_by_recomputation)
 from experiments.v03.poly_deficit import solve_poly_deficit
 
 
@@ -101,6 +102,33 @@ class PriorEdgeResourceLift(unittest.TestCase):
         for bad in (0,True,1.4):
             with self.assertRaises(ValueError):
                 best_length([1,3,9,27],10,must_select=(bad,))
+
+
+    def test_unrestricted_modulus_length_classical_lift(self):
+        # Independent direct selected-index subset enumeration; includes
+        # m near 2, m>U, tie cases, signed values and empty solutions.
+        count=0
+        for n in range(2,8):
+            U=n*(n+1)//2
+            for a in product((-1,0,1),repeat=n):
+                for m in range(2,U+3):
+                    ref=selected_subset_oracle(a,m)
+                    self.assertEqual(best_length_modular(a,m),len(ref),(n,a,m))
+                    count+=1
+        self.assertEqual(count,84465)
+
+    def test_unrestricted_modulus_full_lex_selfreduction(self):
+        count=0
+        for n in range(2,7):
+            U=n*(n+1)//2
+            for a in product((-1,0,1),repeat=n):
+                for m in range(2,U+3):
+                    ref=selected_subset_oracle(a,m)
+                    self.assertEqual(
+                        solve_lex_modular_by_recomputation(a,m),
+                        ref,(n,a,m))
+                    count+=1
+        self.assertEqual(count,21042)
 
 
 if __name__=="__main__":
