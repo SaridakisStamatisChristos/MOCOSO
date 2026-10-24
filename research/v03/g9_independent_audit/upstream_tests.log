@@ -1,0 +1,11 @@
+test_additional_4000_signed_partition_seed (tests.test_v03_g9_quadratic_lex.G9QuadraticSpaceIndependent.test_additional_4000_signed_partition_seed) ... ok
+test_exhaustive_four_valued_full_selected_subset (tests.test_v03_g9_quadratic_lex.G9QuadraticSpaceIndependent.test_exhaustive_four_valued_full_selected_subset) ... ok
+test_exhaustive_ternary_full_selected_subset (tests.test_v03_g9_quadratic_lex.G9QuadraticSpaceIndependent.test_exhaustive_ternary_full_selected_subset) ... ok
+test_independent_partition_large_signed_seed (tests.test_v03_g9_quadratic_lex.G9QuadraticSpaceIndependent.test_independent_partition_large_signed_seed) ... ok
+test_lex_tie_equal_differences_fixed_suffix_and_zero (tests.test_v03_g9_quadratic_lex.G9QuadraticSpaceIndependent.test_lex_tie_equal_differences_fixed_suffix_and_zero) ... ok
+test_query_bound_and_domain (tests.test_v03_g9_quadratic_lex.G9QuadraticSpaceIndependent.test_query_bound_and_domain) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 13.120s
+
+OK
