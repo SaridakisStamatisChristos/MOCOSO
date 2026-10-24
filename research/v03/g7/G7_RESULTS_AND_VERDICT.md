@@ -26,3 +26,12 @@ G7 improves the previous *known tradeoff frontier* within MOCOSO's investigated 
 Seek O(n+(h+1)^3) time / O((h+1)^2) wide-word auxiliary memory with exact full lex, ideally by a proved canonical ranking/traceback mechanism that fits the O(p(h+1)) sorted-event frontier. Audit the 2025 width-bounded Hirschberg work against the actual event graph's frontier size and tie semantics before claiming transfer. Preserve exact omission resource, q+2 crossing triples, and original G3 proof. For any failed avenue record a minimized counterexample instead of repairing claims silently.
 
 **Git policy:** standalone research-only G7 branch stacked on unmerged PR #12. No production rewrite, no merge, no manuscript preparation or submission. Existing G6 judgments are not erased; the only change is an additional verified compositional Pareto bound.
+
+
+## Post-PR13 independent audit handoff, 2026-10-24
+
+Run [40083406635](https://github.com/SaridakisStamatisChristos/MOCOSO/actions/runs/40083406635), at original PR #13 SHA \`e8ff4846968699488a3cba6f995dbbb19a038be3\`, has completed **4/4 SUCCESS**. The original table's sentence "GitHub matrix to be checked separately" concerns the historical at-authoring-time status, not the now-verified frozen run. This is not evidence for G8 commits until their own CI passes.
+
+The G7 review's independently constructed *omission partition* oracle is now test code under \`tests/test_v03_g7_independent_partition.py\` with seed, finite scope and intended test command recorded in the adversarial ledger. Theorem proof event-threshold quantifier and a conservative bit-cost overlay are appended to \`G7_THEOREM_LAB.md\`. These are research-only documentary and test/CI changes; no production algorithm is changed.
+
+The G7 bound itself remains a valid conservative upper bound, pending any strictly stronger G8 derivation. Priority/significance remain separate, unresolved publication gates.

@@ -64,3 +64,16 @@ There are O(p^2) ordered edges (sort O(p^2 log(p+1))), O(p(h+1)) DP cells, and a
 - **R5: selecting lex-smallest omissions, rather than lex-largest for fixed selected length. REFUTED.** Input a=(-3,-3,-3,-3,-2,0), n=6, U=21,m=16,h=5. The feasible optimal 4-tuples (1,4,5,6) and (2,3,5,6) correspond to omitted (2,3) and (1,4). The former selected tuple is lex-smallest, and its omitted tuple is lex-**largest**. A one-element omission (5) creates an invalid five-index tuple on this input.
 
 **Priority statement:** The established bound is a resource-lift of Kluev-style sorted convex edges with elementary distinct-positive-part compression and ordinary explicit tuple comparisons. It is a reproducible specialized Pareto bound; no claim of a new general DP primitive, lower bound, or first-in-literature theorem follows.
+
+
+## G7 auditor corrigendum: global event threshold and explicit bit-cost accounting
+
+### Global threshold quantifier
+
+Let E_1,...,E_M be the **entire** event order sorted by (difference,-destination,source), including rejected edges. Immediately before processing E_k=(d,-j,i), each dp[v][r] is the canonical best prefix among paths whose last edge has already been processed among E_1,...,E_(k-1), together with initialized singleton prefixes. For E_k, any DP[i][r] predecessor may be extended only if its last edge has strictly smaller difference than d: an earlier event with the same difference must have destination greater than j, whereas every final edge of a prefix ending at i has destination i<j. Therefore no same-difference predecessor can have entered dp[i]. Every feasible predecessor of difference <d was processed earlier. State dominance at (i,r) is consequently valid for **subsequent larger-difference events**, not for arbitrary earlier or equal-difference edges. Earlier in-place improvements are harmless only with this complete ordering. This proves the quantifier implicit in Sections 3-4 without redefining the original algorithm.
+
+### Conventional bit-cost overlay (not a fixed-word claim)
+
+Let B>=1 bound the bit length of each signed input value, and L=1+B+ceil(log2(n+h+2)). Event signed differences fit O(L) bits; indices, omission weights and length counters fit O(L) bits. Each explicit omitted index requires O(log(h+2)) bits. A safe coarse schoolbook bound, excluding reading/writing the input/output, is O((n+p^2 log(p+1)+p^2(h+1)(1+sqrt(h+1))) L^2) bit operations and O(p^2 L + p(h+1)(1+sqrt(h+1)) L) auxiliary bits (including event keys and table addresses). This is a **loose upper bound**, not a tight bit theorem; output emission costs O(n log(n+2)) additional bits. If input/output I/O is charged, reading signed input may cost Omega(nB) and materializing selected indices costs Omega(n log n) in the worst case. Arbitrary Python integers, objects and allocators are not single fixed words; no CPython RSS or ordinary 64-bit-word O(h^(5/2)) bound is claimed.
+
+This corrigendum leaves G7-P's original wide-word statement untouched; G8 may strengthen the operation count by analyzing **only non-overbudget edges**.
