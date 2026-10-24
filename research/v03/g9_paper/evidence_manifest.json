@@ -1,0 +1,44 @@
+{
+  "snapshot": "43353e2b9a659d736b627788ec0c46554a090c75",
+  "original_target": "96ac7e2df040ed964bc36f0ad4e00d541b3f1f2d",
+  "date": "2026-10-24",
+  "sha256": {
+    "experiments/v03/g9_quadratic_lex.py": "6d70b182aa7702246c98b85351c500883ede327292194ea7a5f5c49e925e54ba",
+    "research/v03/g9_independent_audit/solver_corrected.py": "a01ec1b21cf49f32386d5b4e4aa47aa99d327704ac411291332fc1230b461015",
+    "research/v03/g9_independent_audit/audit.py": "3a42e800da20854e8a4f306ecccc27a73e446cc3b7800592111c07cdb7856870",
+    "research/v03/g9_independent_audit/results.json": "e5045dfcf45c07504d73b60f77ddab7c66a866141d677d9ec46bc55e8fd90517",
+    "research/v03/g9_independent_audit/AUDIT_REPORT.md": "6d9eb2520e491b88b88b4767af6fea2294eafd7b138f0865185d75527a2c263c",
+    "research/v03/g9_independent_audit/LITERATURE.md": "1927e419c73f8a16eaa7beae954a63ad3ccffdcefbc0d8d67212502307641817",
+    "research/v03/g8/G8_THEOREM_LAB.md": "111497bb8ff471eb5058f23b1f28f0171e0097adf004a91216a4152bebbaaa3c"
+  },
+  "full_witness_cases": 80283,
+  "preserved_counts": {
+    "counter_bound_checks": 4662,
+    "exhaustive_selected_subset": 73809,
+    "pair_full_witness": 1800,
+    "random_selected_subset": 6000,
+    "forced_scalar_queries": 13767,
+    "forced_pair_queries": 1565,
+    "nontrivial_optimal_ties": 2,
+    "event_set_and_harmonic_checks": 201,
+    "planted_partition_witnesses": 450,
+    "constructed_deep_lex_ties": 18
+  },
+  "rerun": {
+    "status": "PASS: exactness checks; pinned auxiliary-space claim REFUTED",
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+    "elapsed_seconds": 19.279767564000394,
+    "exact_semantic_match_keys": [
+      "counts",
+      "omission_histogram",
+      "findings",
+      "stress_counters",
+      "constructed_tie_families",
+      "files_sha256"
+    ],
+    "note": "Executed in disposable detached worktree. Original committed evidence unchanged. Timings and allocation bytes are runtime-dependent.",
+    "upstream_suite": "6 tests passed",
+    "upstream_log_sha256": "3f2b5796b8ebace2e253c60bfdff12f8cdcf68933b4d432fb24d61751809e8cf"
+  }
+}
