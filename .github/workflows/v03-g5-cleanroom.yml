@@ -159,14 +159,17 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git switch -c research/v03-g5-evidence-archive
+          # Keep the original evidence branch immutable. Each replay receives
+          # its own ref, including a distinct ref for a retried workflow run.
+          archive_branch="research/v03-g5-evidence-archive-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git switch -c "$archive_branch"
           mkdir -p research/v03/prepaper/archive/G4 research/v03/prepaper/archive/G5
           cp collected/originals/*.zip research/v03/prepaper/archive/G4/
           cp collected/replay/*.json research/v03/prepaper/archive/G5/
           cp g5_independent_final.json research/v03/prepaper/archive/G5/manifest_verified.json
           git add research/v03/prepaper/archive
           git commit -m "G5: archive verified G4 original ZIPs and fresh cleanroom reproductions"
-          git push origin HEAD:refs/heads/research/v03-g5-evidence-archive
+          git push origin "HEAD:refs/heads/$archive_branch"
       - name: Preserve the exact final verification report
         if: always()
         uses: actions/upload-artifact@v4

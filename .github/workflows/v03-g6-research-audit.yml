@@ -44,7 +44,12 @@ jobs:
         run: |
           set -euo pipefail
           cd g6-audit
-          git diff --exit-code bcfd6ea96cfcbb690d972007791a1b572a1b0001 -- modconvex.py edge_dp.py experiments/v03 tests research/v03/t1_deficit_proof.md
+          # Preserve files present at the audited snapshot; later research
+          # additions are allowed without weakening modification/deletion checks.
+          baseline=bcfd6ea96cfcbb690d972007791a1b572a1b0001
+          while IFS= read -r path; do
+            git diff --exit-code "$baseline" -- "$path"
+          done < <(git ls-tree -r --name-only "$baseline" -- modconvex.py edge_dp.py experiments/v03 tests research/v03/t1_deficit_proof.md)
       - name: Recompute all finite claims without importing MOCOSO solver or G5 auditor
         shell: bash
         run: |
