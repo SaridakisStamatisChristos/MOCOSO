@@ -1,0 +1,49 @@
+name: G9 independent mathematical audit regression
+on:
+  pull_request:
+    paths:
+      - "research/v03/g9_independent_audit/**"
+      - ".github/workflows/v03-g9-independent-audit.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PYTHONHASHSEED: "0"
+  PYTHONPATH: "."
+jobs:
+  independent-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Preserve every pre-existing G3-G9 file
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Preserve the frozen solvers, tests, and research evidence. Root
+          # navigation and CI maintenance are outside this source invariant.
+          test -z "$(git diff --name-only --diff-filter=DMRTUXB 96ac7e2df040ed964bc36f0ad4e00d541b3f1f2d HEAD -- modconvex.py edge_dp.py experiments/v03 tests research/v03)"
+      - name: Independent oracles, mutations, and memory regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python research/v03/g9_independent_audit/audit.py | tee g9_independent_ci.log
+      - name: Reproduce original G9 suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_v03_g9_quadratic_lex -v 2>&1 | tee g9_upstream_ci.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g9-independent-audit-py312
+          path: |
+            g9_independent_ci.log
+            g9_upstream_ci.log
+            research/v03/g9_independent_audit/results.json
+          retention-days: 90

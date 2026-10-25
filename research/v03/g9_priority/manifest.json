@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-24",
+  "target_commit": "96ac7e2df040ed964bc36f0ad4e00d541b3f1f2d",
+  "audit_commit": "43353e2b9a659d736b627788ec0c46554a090c75",
+  "base_manuscript_commit": "d861a45b59773f5b3b72a207a6e2f5318c85e8c1",
+  "classification": "INCREMENTAL / COMBINATIONAL",
+  "exact_global_priority": "UNRESOLVED; no identical full theorem identified in inspected sources",
+  "files_sha256": {
+    "MANUSCRIPT_AMENDMENT.md": "a71b6b486ae2c5ef1c48b885885124173148341826e7c9195db7ce21ad0f9566",
+    "PRIOR_ART_REPORT.md": "ed48c2f3cd6caa44467a7ac5638abd488852f63cfe79b8b903860c6a98f34973",
+    "README.md": "4e53caa08158da1b87358bb3a9a1d5a46323d67c471b9e8a00f124ef53041d79",
+    "SEARCH_LOG.md": "a5b1e818cb820888d29c753b6b5250f8a9c0cb6e2ca57f659c5b94a16c9e79f1",
+    "SOURCES.md": "7eeac43c93a1dfa0660378b4c2b6f1e825c2b8f182c2b10472b7650d00b9848d",
+    "additions.bib": "b1964622dc58813d8cd8cd1b77b21d3974070cc38b2226c6f1181a864d29ba97",
+    "reduction_checks.py": "08fd3cc213a284d2d74ffe13cac750247710de31e3c56f1fd1f181d8ac6073d4",
+    "results.json": "d6e4c76f11f85e1fc5e3432bdc39122f659cf2efee6e778fc77084f4ee77fcfc"
+  },
+  "changes": "Additions only under research/v03/g9_priority; no merges or production modifications",
+  "manuscript_amendment": "Proposed text only; earlier manuscript exports preserved"
+}

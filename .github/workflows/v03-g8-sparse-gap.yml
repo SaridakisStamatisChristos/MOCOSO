@@ -1,0 +1,56 @@
+name: G8 sparse-gap full lex research
+on:
+  pull_request:
+    paths:
+      - "experiments/v03/g8_persistent_intervals.py"
+      - "tests/test_v03_g8_persistent_intervals.py"
+      - "tests/test_v03_g7_independent_partition.py"
+      - "research/v03/g8/**"
+      - ".github/workflows/v03-g8-sparse-gap.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PYTHONHASHSEED: "0"
+  PYTHONPATH: "."
+jobs:
+  exact-full-lex:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.11", "3.13"]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Preserve production and G3-G7 solver sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code e8ff4846968699488a3cba6f995dbbb19a038be3 -- modconvex.py edge_dp.py experiments/v03/poly_deficit.py experiments/v03/edge_budget_lift.py experiments/v03/g7_compact_lex.py tests/test_v03_g7_compact_lex.py
+      - name: Independent full selected-tuple and sparse-edge verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_v03_g7_independent_partition tests.test_v03_g8_persistent_intervals 2>&1 | tee g8_verification.log
+      - name: Fingerprint reproducible evidence
+        shell: bash
+        if: always()
+        run: |
+          python -VV > g8_environment.txt
+          git rev-parse HEAD >> g8_environment.txt
+          python -c "import hashlib,pathlib; paths=('experiments/v03/g8_persistent_intervals.py','tests/test_v03_g8_persistent_intervals.py','tests/test_v03_g7_independent_partition.py'); [print(p,hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()) for p in paths]" >> g8_environment.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g8-sparse-${{ matrix.os }}-py${{ matrix.python }}
+          path: |
+            g8_verification.log
+            g8_environment.txt
+          retention-days: 90

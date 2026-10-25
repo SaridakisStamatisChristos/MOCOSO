@@ -1,0 +1,65 @@
+name: MOCOSO novelty mechanism collision verification
+
+on:
+  pull_request:
+    paths:
+      - experiments/v03/edge_budget_lift.py
+      - tests/test_v03_edge_budget_lift.py
+      - research/v03/prepaper/novelty_mechanism_resolution_2026-10-24.md
+      - .github/workflows/v03-novelty-mechanism.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONHASHSEED: '0'
+  PYTHONPATH: '.'
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: core.autocrlf
+  GIT_CONFIG_VALUE_0: 'false'
+
+jobs:
+  mechanism-equivalence:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        py: ['3.11','3.13']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.py }}
+      - name: Immutable original/previous research and tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code 00d7f1870bbb3d35e1e62da1057c76ff4dde712d -- modconvex.py edge_dp.py experiments/v03/deficit.py experiments/v03/poly_deficit.py experiments/v03/benchmark_expanded.py tests/test_v03_poly_deficit.py
+      - name: Original selected-subset oracle and 2013 edge-lift full-lex study
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_v03_edge_budget_lift 2>&1 | tee novelty_equivalence_tests.log
+      - name: Capture environment and file sha
+        if: always()
+        shell: bash
+        run: |
+          python -VV > novelty_environment.txt
+          python -c "import platform; print(platform.platform())" >> novelty_environment.txt
+          git rev-parse HEAD >> novelty_environment.txt
+          python -c "from hashlib import sha256;from pathlib import Path;p=Path('experiments/v03/edge_budget_lift.py');print(p,sha256(p.read_bytes()).hexdigest())" >> novelty_environment.txt
+      - name: Retain proof-challenge data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: novelty-mechanism-${{ matrix.os }}-py${{ matrix.py }}
+          path: |
+            novelty_equivalence_tests.log
+            novelty_environment.txt
+          retention-days: 90
+          if-no-files-found: warn
