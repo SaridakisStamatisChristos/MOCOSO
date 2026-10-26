@@ -7,6 +7,7 @@ on:
       - 'tests/test_v03_g11_rfp_hybrid.py'
       - 'tests/test_v03_g11_partition_oracle.py'
       - 'benchmarks/g11_rfp_paired.py'
+      - 'benchmarks/g11_rfp_holdout.py'
       - 'research/v03/g11/**'
       - '.github/workflows/v03-g11-rfp.yml'
   workflow_dispatch:
@@ -60,6 +61,8 @@ jobs:
         run: python benchmarks/g11_rfp_paired.py --profile smoke --repeats 5 --output g11_rfp_smoke.json
       - name: Full 171-case replicated-on-host screen
         run: python benchmarks/g11_rfp_paired.py --profile paper --repeats 5 --output g11_rfp_full.json
+      - name: Independent 240-case feasible/infeasible holdout
+        run: python benchmarks/g11_rfp_holdout.py --repeats 5 --output g11_rfp_holdout.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -67,4 +70,5 @@ jobs:
           path: |
             g11_rfp_smoke.json
             g11_rfp_full.json
+            g11_rfp_holdout.json
           retention-days: 90
