@@ -1,0 +1,75 @@
+name: G10 direct-next theoretical research verification
+on:
+  pull_request:
+    paths:
+      - 'experiments/v03/g10_direct_next.py'
+      - 'tests/test_v03_g10_direct_next.py'
+      - 'benchmarks/g10_rfp_comparative.py'
+      - 'research/v03/g10/**'
+      - '.github/workflows/v03-g10-direct-next.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PYTHONHASHSEED: '0'
+  PYTHONPATH: '.'
+jobs:
+  independent-falsification:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Preserve historical research and public solver
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code bd22ddc05954af19aa2f57c6199c92817c232f54 -- \
+            modconvex.py experiments/v03/g8_persistent_intervals.py \
+            experiments/v03/g9_quadratic_lex.py \
+            research/v03/g9_independent_audit/solver_corrected.py \
+            research/v03/g9_paper/manuscript.md
+      - name: Independent exact-subset and attributed G9 comparisons
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_v03_g10_direct_next 2>&1 | tee g10_ci_tests.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g10-falsification-${{ matrix.os }}-py${{ matrix.python }}
+          path: g10_ci_tests.log
+          retention-days: 90
+  five-way-crossover:
+    needs: independent-falsification
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Smoke five-way feasibility and runtime
+        run: python benchmarks/g10_rfp_comparative.py --profile smoke --repeats 5 --output g10_rfp_smoke.json
+      - name: Expanded five-way crossover
+        run: python benchmarks/g10_rfp_comparative.py --profile ci --repeats 5 --output g10_rfp_ci.json
+      - name: Larger input and maximal-omission crossover
+        run: python benchmarks/g10_rfp_comparative.py --profile paper --repeats 5 --output g10_rfp_paper.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g10-five-way-raw-py313
+          path: |
+            g10_rfp_smoke.json
+            g10_rfp_ci.json
+            g10_rfp_paper.json
+          retention-days: 90
