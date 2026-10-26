@@ -1,0 +1,88 @@
+name: G9 RFP corrected solver and crossover screening
+on:
+  pull_request:
+    paths:
+      - 'experiments/v03/g9_corrected.py'
+      - 'tests/test_v03_g9_corrected_rfp.py'
+      - 'benchmarks/g9_rfp_comparative.py'
+      - 'research/v03/rfp_execution/**'
+      - 'research/v03/README.md'
+      - '.github/workflows/v03-g9-rfp-execution.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PYTHONHASHSEED: '0'
+  PYTHONPATH: '.'
+jobs:
+  corrected-regressions:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Verify historical source preservation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code bd22ddc05954af19aa2f57c6199c92817c232f54 -- \
+            experiments/v03/g9_quadratic_lex.py \
+            research/v03/g9_independent_audit/solver_corrected.py \
+            research/v03/g9_independent_audit/results.json \
+            research/v03/g9_paper/manuscript.md
+      - name: Independent-oracle and allocation regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_v03_g9_corrected_rfp 2>&1 | tee g9_rfp_regression.log
+      - name: Record environment and source hashes
+        if: always()
+        shell: bash
+        run: |
+          python -VV > g9_rfp_environment.txt
+          git rev-parse HEAD >> g9_rfp_environment.txt
+          python -c "import hashlib,pathlib; paths=['experiments/v03/g9_corrected.py','experiments/v03/g9_quadratic_lex.py','research/v03/g9_independent_audit/solver_corrected.py']; [print(x,hashlib.sha256(pathlib.Path(x).read_bytes()).hexdigest()) for x in paths]" >> g9_rfp_environment.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g9-rfp-regression-${{ matrix.os }}-py${{ matrix.python }}
+          path: |
+            g9_rfp_regression.log
+            g9_rfp_environment.txt
+          retention-days: 90
+  crossover-smoke:
+    needs: corrected-regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Record experimental plan
+        run: python benchmarks/g9_rfp_comparative.py --profile smoke --plan-only --output g9_rfp_plan.json
+      - name: Validate full witnesses and measure matched runtimes
+        run: python benchmarks/g9_rfp_comparative.py --profile smoke --repeats 3 --output g9_rfp_results.json
+      - name: Extended crossover screening on registered CI profile
+        run: python benchmarks/g9_rfp_comparative.py --profile ci --repeats 5 --output g9_rfp_ci_results.json
+      - name: Extended crossover screening on paper-sized profile
+        run: python benchmarks/g9_rfp_comparative.py --profile paper --repeats 5 --output g9_rfp_paper_results.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g9-rfp-crossover-smoke-py313
+          path: |
+            g9_rfp_plan.json
+            g9_rfp_results.json
+            g9_rfp_ci_results.json
+            g9_rfp_paper_results.json
+          retention-days: 90

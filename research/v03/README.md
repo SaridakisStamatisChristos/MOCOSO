@@ -11,7 +11,8 @@ The paper specifies the arithmetic model and boundary cases.
 
 - [Revised manuscript](g9_paper/manuscript.md), [PDF](g9_paper/exports/manuscript.pdf),
   [Word](g9_paper/exports/manuscript.docx), and [LaTeX](g9_paper/exports/manuscript.tex).
-- [Corrected G9 implementation](g9_independent_audit/solver_corrected.py).
+- [Canonical corrected G9 research entrypoint](../../experiments/v03/g9_corrected.py), byte-identical to the [audited derivative](g9_independent_audit/solver_corrected.py).
+- [RFP execution checkpoint](rfp_execution/RFP_EXECUTION_2026-10-26.md), [new regression suite](../../tests/test_v03_g9_corrected_rfp.py), and [four-way crossover benchmark](../../benchmarks/g9_rfp_comparative.py).
 - [Independent audit and five separate verdicts](g9_independent_audit/AUDIT_REPORT.md).
 - [Prior-art investigation](g9_priority/PRIOR_ART_REPORT.md) and
   [documented search log](g9_priority/SEARCH_LOG.md).
@@ -20,7 +21,7 @@ The paper specifies the arithmetic model and boundary cases.
 
 The original implementation allocates output-sized tuple slices in its final
 validation. Use the corrected derivative for the claimed auxiliary-space bound.
-The production solver and its dispatch remain unchanged.
+The production solver and its dispatch remain unchanged; the new crossover experiment does not certify SOTA performance.
 
 ## Contribution and evidence
 

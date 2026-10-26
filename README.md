@@ -7,6 +7,7 @@ Given a sequence of arbitrary signed integers and a modulus `m >= 2`, find a lon
 ## Code and evidence
 
 - [G9 research guide](research/v03/README.md) — corrected quadratic-space canonical-witness algorithm, theorem, independent audit, prior-art investigation, and revised paper ([PDF](research/v03/g9_paper/exports/manuscript.pdf), [Word](research/v03/g9_paper/exports/manuscript.docx)).
+- [Corrected G9 research solver](experiments/v03/g9_corrected.py) — audited full-lex algorithm; [RFP regression, crossover screen and research checkpoint](research/v03/rfp_execution/RFP_EXECUTION_2026-10-26.md). Public dispatch is unchanged.
 - [modconvex.py](modconvex.py) — exact optimizer and threshold decision solver, certificate checking, and brute-force oracle.
 - [edge_dp.py](edge_dp.py) — structurally different exact dynamic program used in verification.
 - [research_tests.py](research_tests.py), [edge_trials.py](edge_trials.py), [extra_trials.py](extra_trials.py) — differential, adversarial, and parameter-regime tests.
