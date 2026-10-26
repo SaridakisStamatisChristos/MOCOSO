@@ -15,11 +15,11 @@ SMALL_H = 18
 G8_H_LIMIT = 64
 
 
-def _validated_h(a,m):
+def _validated_h(a,m,*,check_values=True):
     n=len(a)
     U=n*(n+1)//2
     if (type(m) is not int or m<2 or not U<2*m or m>U
-            or any(type(v) is not int for v in a)):
+            or (check_values and any(type(v) is not int for v in a))):
         raise ValueError("requires signed integer values and U/2<m<=U")
     h=U-m
     if h>=n:
@@ -79,7 +79,9 @@ def solve_g11(a,m,*,counters=None):
     For counters, reports which mechanism ran; internal G10 counters are
     preserved under a nested key to avoid mislabeling G8/direct estimates.
     """
-    h=_validated_h(a,m)
+    # Delegate full element validation to the selected exact subsolver.
+    # The direct solver also validates the array before enumeration.
+    h=_validated_h(a,m,check_values=False)
     if h<=SMALL_H:
         answer=solve_direct(a,m)
         mode="direct"
