@@ -5,6 +5,7 @@ on:
       - 'experiments/v03/g11_hybrid.py'
       - 'experiments/v03/g11_bounded_g8.py'
       - 'tests/test_v03_g11_rfp_hybrid.py'
+      - 'tests/test_v03_g11_partition_oracle.py'
       - 'benchmarks/g11_rfp_paired.py'
       - 'research/v03/g11/**'
       - '.github/workflows/v03-g11-rfp.yml'
@@ -39,7 +40,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m unittest -v tests.test_v03_g11_rfp_hybrid 2>&1 | tee g11_rfp_oracles.log
+          python -m unittest -v tests.test_v03_g11_rfp_hybrid tests.test_v03_g11_partition_oracle 2>&1 | tee g11_rfp_oracles.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
