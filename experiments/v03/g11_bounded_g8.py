@@ -1,8 +1,5 @@
-"""Research derivative of original G8: avoids O(n) output-sized slice temporaries.
-
-Diff from experiments/v03/g8_persistent_intervals.py is only the final indexed
-strict-convexity assertion. Historical implementation is untouched.
-"""
+# Research derivative of G8: only final assertion uses indexed checks.
+# Preserves the historical implementation; avoids output-sized slices.
 """G8 research-only exact full-lex sparse-gap interval DP.
 
 For U/2<m<=U, h=U-m<n and H=h+1, returns the globally
