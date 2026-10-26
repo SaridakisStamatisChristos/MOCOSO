@@ -1,0 +1,71 @@
+name: G10 RFP adversarial inner-oracle and sparse research gate
+on:
+  pull_request:
+    paths:
+      - 'experiments/v03/g10_sparse_experimental.py'
+      - 'tests/test_v03_g10_rfp_adversarial.py'
+      - 'benchmarks/g10_rfp_sparse_screen.py'
+      - 'research/v03/g10/G10_RFP_INDEPENDENT_REVIEW.md'
+      - '.github/workflows/v03-g10-rfp-adversarial.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PYTHONPATH: '.'
+  PYTHONHASHSEED: '0'
+jobs:
+  independent-pair-falsification:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.11','3.13']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Verify frozen original proof and solvers untouched
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code 8b784e60c696a2c531bcfe306d9dfaab6b78ebaf --             modconvex.py experiments/v03/g9_quadratic_lex.py             experiments/v03/g10_direct_next.py             research/v03/g10/G10_DIRECT_NEXT_PROOF.md             research/v03/g9_paper/manuscript.md
+      - name: Exercise 4500 independently scored forced-oracle cases and mutations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_v03_g10_rfp_adversarial -v 2>&1 | tee g10_adversarial_tests.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g10-rfp-adversarial-${{ matrix.os }}-py${{ matrix.python }}
+          path: g10_adversarial_tests.log
+          retention-days: 90
+  comparative:
+    needs: independent-pair-falsification
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Matched smoke comparison
+        run: python benchmarks/g10_rfp_sparse_screen.py --profile smoke --repetitions 5 --output g10_sparse_smoke.json
+      - name: Matched extended comparison
+        run: python benchmarks/g10_rfp_sparse_screen.py --profile ci --repetitions 5 --output g10_sparse_ci.json
+      - name: Larger matched comparison
+        run: python benchmarks/g10_rfp_sparse_screen.py --profile paper --repetitions 5 --output g10_sparse_paper.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g10-rfp-sparse-raw-results
+          path: |
+            g10_sparse_smoke.json
+            g10_sparse_ci.json
+            g10_sparse_paper.json
+          retention-days: 90
