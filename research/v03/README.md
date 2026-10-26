@@ -53,3 +53,9 @@ G3–G9 implementations. Three workflow corrections address observed failures:
 Reproduce the solver tests with `python -m unittest discover -s tests -p 'test_*.py' -v`.
 See [audit reproduction](g9_independent_audit/REPRODUCE.md) and
 [manuscript build QA](g9_paper/BUILD_QA.md) for the separate evidence scopes.
+
+## Experimental G10 direct-next candidate (not certified)
+
+- [G10 prototype](../../experiments/v03/g10_direct_next.py) and [candidate proof, assumptions, counterexamples and evidence](g10/G10_DIRECT_NEXT_PROOF.md).
+- [New independent tests](../../tests/test_v03_g10_direct_next.py) and [five-way feasible/infeasible crossover benchmark](../../benchmarks/g10_rfp_comparative.py).
+- Proposed bound: `O(n+(h+1)^(5/2) log(h+2))` time, `O((h+1)^2)` auxiliary wide words, for `h<n`. The extra next-omission tie coordinate replaces G9's repeated binary-search oracle calls. This is a **proof candidate**, not externally refereed, formally machine-checked, priority-certified, or a replacement for the revised G9 paper. Public dispatch is unchanged.
