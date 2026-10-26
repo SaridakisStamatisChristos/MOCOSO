@@ -64,3 +64,13 @@ None of those abstract-level matches by itself proves the **exact G10 high-modul
 | Exact high-modulus G10 global priority | POSSIBLY_NOVEL (unresolved) | Bounded targeted search | External theorem-level implication audit |
 
 **RFP checkpoint:** PR #24 should remain a draft. The most valuable next action is external mathematical review of G10 or a separately validated implementation improvement on representative feasible workload distributions—not additional ungrounded SOTA claims.
+
+## Execution continuation and CI defect, 2026-10-27
+
+The first PR #24 workflow [40413443061](https://github.com/SaridakisStamatisChristos/MOCOSO/actions/runs/40413443061) **failed before executing any oracle tests**. Reproduced reason: the initial copied G8 derivative inserted a second module docstring before `from __future__ import annotations`, which Python forbids. Corrected by moving provenance to comments **ahead of the original docstring** in commit `0fb8a13ba98a2eba5690c449c0b8b45a61912ed2`. This was a packaging SyntaxError, not a semantic counterexample. The failure is retained in GitHub Actions and should not be represented as a passing run.
+
+Second performance-specific correction: the top-level router originally scanned all values for type errors before delegating to subsolvers that scan the same array again. The revised router validates only modulus/range before dispatch, and delegates integer-value validation to the selected exact solver, in commit `8acd2b6ff58c3f33424612c4142db0c6ca042a48`. This preserves errors for noninteger inputs and eliminates a redundant O(n) scan. A local repeat of the same 171-case benchmark showed **117/171 wins** versus the corrected G8, median corrected-G8/G11 ratio **1.141x**. The terminal-fault family remained approximately at parity (median 0.990x), so uniform superiority is still false. These are repeated local observations and replace neither the earlier data nor prospective CI results.
+
+A **second independent oracle**, separate from the G11 and G8/G10 implementations, was then executed locally: brute enumeration of distinct omitted index subsets of exact sum h and *full* selected-triple verification, not core truncation. It matched G11 on **56 high-deficit cases**, covering h=19,24,32,48,60,64,65; two n sizes; four value families. This targets both the G8-bounded and G10-unbounded branches, which small n<=8 oracle tests do not reach. The cross-platform CI suite now includes `tests/test_v03_g11_partition_oracle.py`.
+
+**No performance result is VERIFIED_CI until the subsequent GitHub run passes and raw artifact checks.** No code or manuscript is merged, nor has any world-priority or universal SOTA claim been established.
