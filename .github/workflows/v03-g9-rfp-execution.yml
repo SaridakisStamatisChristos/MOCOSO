@@ -72,6 +72,10 @@ jobs:
         run: python benchmarks/g9_rfp_comparative.py --profile smoke --plan-only --output g9_rfp_plan.json
       - name: Validate full witnesses and measure matched runtimes
         run: python benchmarks/g9_rfp_comparative.py --profile smoke --repeats 3 --output g9_rfp_results.json
+      - name: Extended crossover screening on registered CI profile
+        run: python benchmarks/g9_rfp_comparative.py --profile ci --repeats 5 --output g9_rfp_ci_results.json
+      - name: Extended crossover screening on paper-sized profile
+        run: python benchmarks/g9_rfp_comparative.py --profile paper --repeats 5 --output g9_rfp_paper_results.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -79,4 +83,6 @@ jobs:
           path: |
             g9_rfp_plan.json
             g9_rfp_results.json
+            g9_rfp_ci_results.json
+            g9_rfp_paper_results.json
           retention-days: 90
