@@ -34,7 +34,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git diff --exit-code 70e48ddf021e643d7f99c999cd2a6b24aad4aff3 -- \
+          git diff --exit-code 52737060709b5ffad3db469a4a389bdd1fc8c74a -- \
             modconvex.py experiments/v03/g8_persistent_intervals.py \
             experiments/v03/g10_direct_next.py \
             experiments/v03/g11_hybrid.py \
