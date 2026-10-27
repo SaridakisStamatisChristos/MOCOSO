@@ -106,6 +106,14 @@ class G11HybridGates(unittest.TestCase):
                 self.assertFalse(node.value.id=="selected" and
                                  isinstance(node.slice,ast.Slice))
 
+    def test_bounded_g8_streaming_large_h_one(self):
+        # The original G8 derivative previously returned tuple(generator),
+        # which could overallocate a temporary output-proportional buffer.
+        n=12000
+        a=tuple(i*i for i in range(n))
+        m=n*(n+1)//2-1
+        self.assertEqual(bounded_g8(a,m),tuple(range(2,n+1)))
+
     def test_domain(self):
         for a,m in (((0,True,3),6),((0,1,3),True),
                     ((0,1,3,5,10,20,40,80),24)):
