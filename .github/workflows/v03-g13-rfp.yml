@@ -1,0 +1,75 @@
+name: G13 RFP exact two-sided certificates and three-cohort benchmark
+on:
+  pull_request:
+    paths:
+      - 'experiments/v03/g13_two_sided_certificate.py'
+      - 'experiments/v03/g13_certified_hybrid.py'
+      - 'tests/test_v03_g13_two_sided.py'
+      - 'benchmarks/g13_rfp_three_cohorts.py'
+      - 'research/v03/g13/**'
+      - '.github/workflows/v03-g13-rfp.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PYTHONPATH: '.'
+  PYTHONHASHSEED: '0'
+jobs:
+  independent-brute:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.11','3.13']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Guard all historical solvers, proofs and tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code 52737060709b5ffad3db469a4a389bdd1fc8c74a -- \
+            modconvex.py experiments/v03/g8_persistent_intervals.py \
+            experiments/v03/g10_direct_next.py \
+            experiments/v03/g11_hybrid.py \
+            experiments/v03/g12_linear_certificate.py \
+            research/v03/g9_paper/manuscript.md \
+            research/v03/g10/G10_DIRECT_NEXT_PROOF.md
+      - name: Exhaustive independent oracle and G13 weighted-hitting falsification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_v03_g13_two_sided 2>&1 | tee g13_rfp_oracles.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g13-rfp-oracles-${{ matrix.os }}-py${{ matrix.python }}
+          path: g13_rfp_oracles.log
+          retention-days: 90
+  independent-distribution-benchmark:
+    needs: independent-brute
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: G13 against G12 G11 G8 G10 on smoke cases
+        run: python benchmarks/g13_rfp_three_cohorts.py --profile smoke --repeats 3 --output g13_rfp_smoke.json
+      - name: Frozen 425 earlier cases plus new 252-case holdout
+        run: python benchmarks/g13_rfp_three_cohorts.py --profile full --repeats 5 --output g13_rfp_full.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g13-rfp-three-cohorts-raw-py313
+          path: |
+            g13_rfp_smoke.json
+            g13_rfp_full.json
+          retention-days: 90
