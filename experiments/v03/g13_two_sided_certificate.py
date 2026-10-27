@@ -10,7 +10,7 @@ claimed. Also detects impossible instances by minimum-weight hitting of failed t
 """
 from __future__ import annotations
 
-from experiments.v03.g12_linear_certificate import _SelectedIndices
+from experiments.v03.g10_direct_next import _SelectedIndices
 
 
 def certify_g13(a, m, *, counters=None):
