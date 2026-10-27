@@ -120,6 +120,16 @@ class G12LinearCertificate(unittest.TestCase):
         self.assertEqual(certify_up_to_two_omissions(a,m),(3,4,5))
         self.assertEqual(solve_g12(a,m),(3,4,5))
 
+    def test_h_up_to_five_cannot_require_three_omissions(self):
+        # Minimum distinct sum of three omitted indices is 1+2+3=6.
+        for h in (1,2,3,4,5):
+            n=h+8
+            m=n*(n+1)//2-h
+            a=(0,)*h + tuple(4**i for i in range(h,n))
+            self.assertIsNotNone(certify_up_to_two_omissions(a,m))
+            self.assertEqual(certify_up_to_two_omissions(a,m),
+                             solve_g11(a,m))
+
     def test_input_validation(self):
         for a,m in (((0,True,3),6),((0,1,3),True),
                     ((0,1,3,5,10,20,40,80),24)):
