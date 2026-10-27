@@ -10,6 +10,8 @@ claimed. Also detects impossible instances by minimum-weight hitting of failed t
 """
 from __future__ import annotations
 
+from experiments.v03.g12_linear_certificate import _SelectedIndices
+
 
 def certify_g13(a, m, *, counters=None):
     n = len(a)
@@ -114,7 +116,7 @@ def certify_g13(a, m, *, counters=None):
     if bad_total <= 3 and valid((h,)):
         if counters is not None:
             counters.update(status="one_omission",pairs_checked=0)
-        return tuple(i for i in range(1,n+1) if i!=h)
+        return tuple(_SelectedIndices(n,(h,),n-1))
 
     # Every originally bad adjacent triple must contain an omitted index.
     # If one bad triple exists, at least one of its three indices is omitted,
@@ -138,8 +140,7 @@ def certify_g13(a, m, *, counters=None):
             if counters is not None:
                 counters.update(status="two_omissions",
                                 pairs_checked=tested_pairs)
-            return tuple(i for i in range(1,n+1)
-                         if i!=first and i!=second)
+            return tuple(_SelectedIndices(n,(first,second),n-2))
 
     # Three distinct positive omission indices sum at least 1+2+3=6.
     if h<=5:
