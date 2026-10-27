@@ -112,6 +112,14 @@ class G12LinearCertificate(unittest.TestCase):
         self.assertNotIn(h,chosen)
         self.assertEqual(counters['mode'],'linear_certificate')
 
+    def test_original_convexity_does_not_certify_deletion(self):
+        # Every original consecutive triple of squares is strictly convex,
+        # but deleting position 3 creates (2,4,5): 16-4 > 25-16.
+        a=(1,4,9,16,25)
+        m=12  # h=3, and (1,2) is the optimal two-omission set.
+        self.assertEqual(certify_up_to_two_omissions(a,m),(3,4,5))
+        self.assertEqual(solve_g12(a,m),(3,4,5))
+
     def test_input_validation(self):
         for a,m in (((0,True,3),6),((0,1,3),True),
                     ((0,1,3,5,10,20,40,80),24)):
