@@ -1,0 +1,75 @@
+name: G14 RFP three-omission exact certificates and independent holdout
+on:
+  pull_request:
+    paths:
+      - 'experiments/v03/g14_three_omission_certificate.py'
+      - 'experiments/v03/g14_certified_hybrid.py'
+      - 'tests/test_v03_g14_three_omission.py'
+      - 'benchmarks/g14_rfp_three_omission_screen.py'
+      - 'research/v03/g14/**'
+      - '.github/workflows/v03-g14-rfp.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PYTHONPATH: '.'
+  PYTHONHASHSEED: '0'
+jobs:
+  independent-oracles:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.11','3.13']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Prevent rewriting historical algorithm claims and evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code d36b34277ae1625e6e3b6a5f1e2a36d148cc6bf5 -- \
+            modconvex.py experiments/v03/g8_persistent_intervals.py \
+            experiments/v03/g10_direct_next.py experiments/v03/g11_hybrid.py \
+            experiments/v03/g12_linear_certificate.py \
+            experiments/v03/g13_two_sided_certificate.py \
+            research/v03/g9_paper/manuscript.md \
+            research/v03/g10/G10_DIRECT_NEXT_PROOF.md
+      - name: Exhaustive independently enumerated selected subsets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_v03_g14_three_omission 2>&1 | tee g14_rfp_oracles.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g14-rfp-exact-${{ matrix.os }}-py${{ matrix.python }}
+          path: g14_rfp_oracles.log
+          retention-days: 90
+  six-way-benchmark:
+    needs: independent-oracles
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Smoke original and fresh 3-omission cases
+        run: python benchmarks/g14_rfp_three_omission_screen.py --profile smoke --repeats 3 --output g14_rfp_smoke.json
+      - name: Registered 677+140 six-way paired benchmark
+        run: python benchmarks/g14_rfp_three_omission_screen.py --profile full --repeats 5 --output g14_rfp_full.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g14-rfp-six-way-raw-py313
+          path: |
+            g14_rfp_smoke.json
+            g14_rfp_full.json
+          retention-days: 90
