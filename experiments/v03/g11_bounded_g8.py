@@ -10,6 +10,8 @@ No fixed-word bit complexity, RSS or production claim.
 """
 from __future__ import annotations
 
+from experiments.v03.g10_direct_next import _SelectedIndices
+
 
 def solve_g8(a, m):
     n = len(a)
@@ -85,8 +87,11 @@ def solve_g8(a, m):
     final = dp[p][h]
     if final is None:
         return ()
-    excluded = set(omitted(final[1]))
-    selected = tuple(i for i in range(1, n+1) if i not in excluded)
+    # Exactly sized output iterator avoids a generator-backed tuple's
+    # output-proportional transient allocation in CPython.
+    omission_indices = tuple(omitted(final[1]))
+    selected = tuple(_SelectedIndices(n, omission_indices,
+                                     final[0] + n-p))
     assert len(selected) == final[0] + n-p and sum(selected) == m
     assert all(a[selected[k]-1]+a[selected[k+2]-1] >
                2*a[selected[k+1]-1] for k in range(len(selected)-2))
