@@ -44,7 +44,7 @@ These are **EXECUTED_LOCAL** and support the formal argument but do not imply ma
 
 ### Mutation and counterexample obligation
 
-A common incorrect optimization is to check only original consecutive triples outside the removed neighborhoods. That would miss **new triples bridged over a deletion**. For example, `a=(0,1,4,9)`, deleting index 2 leaves `(1,3,4)` with differences 4 and 5 (valid), while deleting index 3 leaves `(1,2,4)` with differences 1 and 8 (valid); other sequences can fail after a deletion even if all original consecutive triples pass. The G12 verifier *explicitly tests the changed triples*, rather than inferring convexity from original local failures alone. An independent mutation gate should verify this property on a concrete invalid case.
+A common incorrect optimization is to check only original consecutive triples outside the removed neighborhoods. That would miss **new triples bridged over a deletion**. For example, `a=(1,4,9,16,25)` has strictly increasing original consecutive differences. Deleting index 3 creates selected values `(1,4,16,25)`, whose final two differences are 12 and 9, so this one-omission candidate is **invalid**. For `m=12` (h=3), the correct best witness is the two-omission complement `(3,4,5)`. The regression suite asserts this explicitly. The G12 verifier *explicitly tests the changed triples*, rather than inferring convexity from original local failures alone. An independent mutation gate should verify this property on a concrete invalid case.
 
 ## Prospective benchmark
 
