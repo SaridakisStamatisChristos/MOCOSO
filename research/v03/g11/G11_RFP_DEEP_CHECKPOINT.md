@@ -74,3 +74,11 @@ Second performance-specific correction: the top-level router originally scanned 
 A **second independent oracle**, separate from the G11 and G8/G10 implementations, was then executed locally: brute enumeration of distinct omitted index subsets of exact sum h and *full* selected-triple verification, not core truncation. It matched G11 on **56 high-deficit cases**, covering h=19,24,32,48,60,64,65; two n sizes; four value families. This targets both the G8-bounded and G10-unbounded branches, which small n<=8 oracle tests do not reach. The cross-platform CI suite now includes `tests/test_v03_g11_partition_oracle.py`.
 
 **No performance result is VERIFIED_CI until the subsequent GitHub run passes and raw artifact checks.** No code or manuscript is merged, nor has any world-priority or universal SOTA claim been established.
+
+## Output-memory accounting correction (2026-10-27)
+
+The first G11 bounded-G8 derivative eliminated the original assertion's output-sized slices, but still used `tuple(i for ...)` to construct the selected tuple. On CPython, a generator passed into `tuple()` may temporarily overallocate output-proportional storage before the final tuple is returned. This transient is **not** covered by excluding just one emitted output from auxiliary word-space accounting.
+
+Commit `d1154d261fb709d6e1f8077d85018ce82fdbf608` replaces that construction with `_SelectedIndices`, a monotone omission cursor with exact tuple length hint already used by the audited G10 implementation. Only the new research derivative changes; historical G8 source and proof stay intact. The omitted-index tuple has size O(sqrt(h+1)), so temporary indexed reconstruction remains charged to O(H²) auxiliary space. Added a 12,000-index h=1 canonical return regression. Verify the **new commit's** cross-platform CI before accepting this correction.
+
+Asymptotic statements concern charged wide words and one excluded emitted output, **not actual Python RSS**. The original 171/240-case benchmark and the subsequent G12–G14 results remain pinned to their executed source SHAs and cannot be silently represented as measurements of this changed derivative.
