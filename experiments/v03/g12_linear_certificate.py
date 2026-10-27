@@ -97,9 +97,10 @@ def certify_up_to_two_omissions(a, m, *, counters=None):
             return tuple(i for i in range(1,n+1)
                          if i!=first and i!=second)
 
-    # For h=1 or h=2 no distinct two-part partition exists, and >2
-    # distinct positive integers cannot sum to h. This proves infeasibility.
+    # For h<=5 three distinct positive indices cannot sum to h,
+    # since 1+2+3=6. Exhausting all 0/1/2-omission candidates proves
+    # infeasibility whenever h<=5.
     if counters is not None:
-        counters.update(status="infeasible" if h<=2 else "unresolved",
+        counters.update(status="infeasible" if h<=5 else "unresolved",
                         pairs_checked=tested_pairs)
-    return () if h<=2 else None
+    return () if h<=5 else None
