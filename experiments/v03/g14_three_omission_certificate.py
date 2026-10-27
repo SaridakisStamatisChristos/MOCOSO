@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from heapq import merge
 from experiments.v03.g13_two_sided_certificate import certify_g13
-from experiments.v03.g12_linear_certificate import _SelectedIndices
+from experiments.v03.g10_direct_next import _SelectedIndices
 
 
 def certify_g14(a,m,*,counters=None):
