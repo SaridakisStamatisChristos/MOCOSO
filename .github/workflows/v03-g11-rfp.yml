@@ -1,0 +1,74 @@
+name: G11 RFP bounded-frontier independent and paired gates
+on:
+  pull_request:
+    paths:
+      - 'experiments/v03/g11_hybrid.py'
+      - 'experiments/v03/g11_bounded_g8.py'
+      - 'tests/test_v03_g11_rfp_hybrid.py'
+      - 'tests/test_v03_g11_partition_oracle.py'
+      - 'benchmarks/g11_rfp_paired.py'
+      - 'benchmarks/g11_rfp_holdout.py'
+      - 'research/v03/g11/**'
+      - '.github/workflows/v03-g11-rfp.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PYTHONHASHSEED: '0'
+  PYTHONPATH: '.'
+jobs:
+  full-witness-oracles:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.11','3.13']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Historical solvers and paper must remain byte-identical
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code 55193723d6cb0144cb1485cd79155bd3b2fd1261 --             modconvex.py experiments/v03/g8_persistent_intervals.py             experiments/v03/g9_quadratic_lex.py             experiments/v03/g10_direct_next.py             research/v03/g9_paper/manuscript.md             research/v03/g10/G10_DIRECT_NEXT_PROOF.md
+      - name: Exhaustive independent selected-subset and threshold regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_v03_g11_rfp_hybrid tests.test_v03_g11_partition_oracle 2>&1 | tee g11_rfp_oracles.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g11-rfp-oracles-${{ matrix.os }}-py${{ matrix.python }}
+          path: g11_rfp_oracles.log
+          retention-days: 90
+  paired-performance:
+    needs: full-witness-oracles
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Smoke including all outcomes
+        run: python benchmarks/g11_rfp_paired.py --profile smoke --repeats 5 --output g11_rfp_smoke.json
+      - name: Full 171-case replicated-on-host screen
+        run: python benchmarks/g11_rfp_paired.py --profile paper --repeats 5 --output g11_rfp_full.json
+      - name: Independent 240-case feasible/infeasible holdout
+        run: python benchmarks/g11_rfp_holdout.py --repeats 5 --output g11_rfp_holdout.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g11-rfp-raw-paired-py313
+          path: |
+            g11_rfp_smoke.json
+            g11_rfp_full.json
+            g11_rfp_holdout.json
+          retention-days: 90
