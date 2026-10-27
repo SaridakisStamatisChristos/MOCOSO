@@ -11,6 +11,38 @@ claimed. For a failed fixed compulsory suffix, returns () exactly.
 from __future__ import annotations
 
 
+class _SelectedIndices:
+    """Emit exactly one returned tuple without an output-sized temporary.
+
+    The length hint gives tuple() the exact final allocation in CPython.
+    This is a research implementation detail, not an RSS guarantee.
+    """
+    def __init__(self,n,omissions,count):
+        self.n=n
+        self.omissions=omissions
+        self.i=1
+        self.cursor=0
+        self.remaining=count
+
+    def __iter__(self):
+        return self
+
+    def __length_hint__(self):
+        return self.remaining
+
+    def __next__(self):
+        while self.i<=self.n:
+            index=self.i
+            self.i+=1
+            if (self.cursor<len(self.omissions) and
+                    self.omissions[self.cursor]==index):
+                self.cursor+=1
+            else:
+                self.remaining-=1
+                return index
+        raise StopIteration
+
+
 def certify_up_to_two_omissions(a, m, *, counters=None):
     n = len(a)
     U = n * (n + 1) // 2
@@ -83,7 +115,7 @@ def certify_up_to_two_omissions(a, m, *, counters=None):
     if valid((h,)):
         if counters is not None:
             counters.update(status="one_omission",pairs_checked=0)
-        return tuple(i for i in range(1,n+1) if i!=h)
+        return tuple(_SelectedIndices(n,(h,),n-1))
 
     # Larger first omitted index gives the lexicographically smaller
     # selected tuple for an equal number of omissions.
@@ -94,8 +126,7 @@ def certify_up_to_two_omissions(a, m, *, counters=None):
             if counters is not None:
                 counters.update(status="two_omissions",
                                 pairs_checked=tested_pairs)
-            return tuple(i for i in range(1,n+1)
-                         if i!=first and i!=second)
+            return tuple(_SelectedIndices(n,(first,second),n-2))
 
     # For h<=5 three distinct positive indices cannot sum to h,
     # since 1+2+3=6. Exhausting all 0/1/2-omission candidates proves
