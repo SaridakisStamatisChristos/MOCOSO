@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from heapq import merge
 from experiments.v03.g13_two_sided_certificate import certify_g13
+from experiments.v03.g12_linear_certificate import _SelectedIndices
 
 
 def certify_g14(a,m,*,counters=None):
@@ -107,8 +108,7 @@ def certify_g14(a,m,*,counters=None):
             if counters is not None:
                 counters.update(status='three_omissions',
                                 triples_checked=checked)
-            dropped=set(omitted)
-            return tuple(i for i in range(1,n+1) if i not in dropped)
+            return tuple(_SelectedIndices(n,omitted,n-3))
 
     if h<=9:
         if counters is not None:
