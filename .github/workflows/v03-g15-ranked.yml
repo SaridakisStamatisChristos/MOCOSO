@@ -1,0 +1,95 @@
+name: G15 exact-head ranked omission evidence
+on:
+  pull_request:
+    paths:
+      - 'experiments/v03/g15_ranked_omissions.py'
+      - 'tests/test_v03_g15_ranked_omissions.py'
+      - 'benchmarks/g15_ranked_screen.py'
+      - '.github/workflows/v03-g15-ranked.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PYTHONPATH: '.'
+  PYTHONHASHSEED: '0'
+jobs:
+  exact-head:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Assert checkout and unchanged baselines
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          git rev-parse HEAD HEAD^{tree} | tee g15_provenance.log
+          git diff --exit-code ccc8451911cc9d67f887bc6826c29bcfb6c148f3 -- \
+            modconvex.py edge_dp.py experiments/v03/g10_direct_next.py \
+            experiments/v03/g11_bounded_g8.py experiments/v03/g11_hybrid.py \
+            experiments/v03/g12_linear_certificate.py \
+            experiments/v03/g13_two_sided_certificate.py \
+            experiments/v03/g14_three_omission_certificate.py
+      - name: Independent complete-witness and rank tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_v03_g15_ranked_omissions tests.test_v03_g14_three_omission 2>&1 | tee g15_tests.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: g15-exact-${{ matrix.os }}-py${{ matrix.python }}
+          path: |
+            g15_tests.log
+            g15_provenance.log
+          retention-days: 90
+  merge-integration:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Separate integration identity and tests
+        run: |
+          git rev-parse HEAD HEAD^{tree}
+          python -m unittest -v tests.test_v03_g15_ranked_omissions
+  benchmark:
+    needs: exact-head
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Assert benchmark head
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+      - name: Frozen 935-case paired screen
+        run: python benchmarks/g15_ranked_screen.py --profile full --repeats 5 --output g15_full.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: g15-ranked-full-py313
+          path: g15_full.json
+          retention-days: 90
